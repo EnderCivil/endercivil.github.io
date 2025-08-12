@@ -1,10 +1,11 @@
-// battles.js
+// battles.js - editor + preview + simulation with weapons, zone, toggles, persistent editor entries
 (() => {
   // DOM refs
   const addBtn = document.getElementById('addBallBtn');
   const ballListEl = document.getElementById('ballList');
   const spawnCanvas = document.getElementById('spawnCanvas');
   const startBtn = document.getElementById('startGameBtn');
+  const endBtn = document.getElementById('endGameBtn');
   const backBtn = document.getElementById('backBtn');
   const iconModal = document.getElementById('iconModal');
   const modalColor = document.getElementById('modalColor');
@@ -45,6 +46,7 @@
 
   // zone inputs
   const zoneStart = document.getElementById('zoneStart');
+  const zoneSpawnDelay = document.getElementById('zoneSpawnDelay'); // spawn visibility delay
   const zoneDelay = document.getElementById('zoneDelay');
   const zoneDuration = document.getElementById('zoneDuration');
   const zoneDPS = document.getElementById('zoneDPS');
@@ -67,21 +69,33 @@
   // data model
   const MAX_BALLS = 10;
   let balls = [];
-  let createdCount = 0;
   let selectedIconTarget = null;
   let currentWeaponTarget = null;
+
   const WARN = { maxHP:2000, damage:800, speed:1200, rotSpeed:1200 };
 
-  // Zone runtime state
+  // zone runtime state
   let zone = {
-    startPct: 100, delay:8, duration:30, dps:4, damageDelay:0.5,
-    centerX: 0.5, centerY: 0.5, // relative center
-    running: false, startTime: 0
+    startPct:100, spawnDelay:1, delay:8, duration:30, dps:4, damageDelay:0.5,
+    centerX:0.5, centerY:0.5, running:false, startTime:0, visible:false
   };
 
   // helpers
-  const uid = () => Math.random().toString(36).slice(2,9);
-  const randColor = ()=> { const h = Math.floor(Math.random()*360); const s = 60 + Math.floor(Math.random()*25); return `hsl(${h} ${s}% 55%)`; };
+  const uid = ()=> Math.random().toString(36).slice(2,9);
+
+  function getNextBallNumber(){
+    // find smallest positive integer not used by names "Ball N"
+    const used = new Set();
+    for(const b of balls){
+      const m = (b.name || '').match(/^Ball\s+(\d+)$/);
+      if(m) used.add(Number(m[1]));
+    }
+    for(let i=1;;i++){ if(!used.has(i)) return i; }
+  }
+
+  const defaultWeaponPreset = 'https://raw.githubusercontent.com/EnderCivil/endercivil.github.io/main/34.png';
+
+  function randColor(){ const h = Math.floor(Math.random()*360); const s = 60 + Math.floor(Math.random()*25); return `hsl(${h} ${s}% 55%)`; }
 
   function randomSpawn(r){
     const pw = spawnCanvas.clientWidth, ph = spawnCanvas.clientHeight;
@@ -95,21 +109,23 @@
     return { x: Math.max(r,pw/2 + (Math.random()*60-30)), y: Math.max(r, ph/2 + (Math.random()*60-30)) };
   }
 
-  // create ball
+  // create ball (name uses smallest available Ball N)
   function createBall(){
     if(balls.length >= MAX_BALLS) return;
-    createdCount++;
     const id = uid();
-    const name = `Ball ${createdCount}`;
+    const name = `Ball ${getNextBallNumber()}`;
     const r = 20;
     const pos = randomSpawn(r);
     const b = {
       id, name, color: randColor(), img:null, _imgObj:null,
       maxHP:100, hpType:'normal', regen:0, damage:10, speed:120,
       x: pos.x, y: pos.y, r,
-      alive:true, hpCur:100, segments:5,
-      weapon: { img:null, _imgObj:null, damage:8, rotSpeed:180, parry:20, width:10, length:48, angle: 0 }
+      alive:true, defeated:false, hpCur:100, segments:5,
+      weaponEnabled: false,
+      weapon: { img: defaultWeaponPreset, _imgObj: new Image(), damage:8, rotSpeed:180, parry:20, width:10, length:48, angle:0 }
     };
+    // load default weapon preset image
+    b.weapon._imgObj.src = b.weapon.img;
     balls.push(b);
     renderBallCard(b);
     updateAddButton();
@@ -118,7 +134,6 @@
 
   function updateAddButton(){ addBtn.disabled = balls.length >= MAX_BALLS; }
 
-  // compute warnings
   function computeWarnings(b){
     const warns = [];
     if(b.maxHP > WARN.maxHP) warns.push('HP');
@@ -128,7 +143,7 @@
     return warns;
   }
 
-  // render card
+  // render ball card with weapon toggle
   function renderBallCard(b){
     const card = document.createElement('div');
     card.className = 'ball-card';
@@ -143,6 +158,7 @@
           <input class="name-input" value="${b.name}" data-id="${b.id}" />
           <span class="attr-warn" data-warn="${b.id}"></span>
         </div>
+
         <div class="controls-row">
           <div class="field"><label>HP:</label>
             <input class="small-input" type="number" value="${b.maxHP}" data-prop="maxHP" data-id="${b.id}" />
@@ -153,41 +169,55 @@
             <input class="small-input" type="number" min="1" max="10" value="${b.segments}" data-prop="segments" data-id="${b.id}" style="width:68px;margin-left:6px;" />
             <span class="faq-dot" data-faq="hp">?</span>
           </div>
+
           <div class="field"><label>Regen/s:</label>
             <input class="small-input" type="number" value="${b.regen}" data-prop="regen" data-id="${b.id}" />
             <span class="faq-dot" data-faq="regen">?</span>
           </div>
+
           <div class="field"><label>Damage:</label>
             <input class="small-input" type="number" value="${b.damage}" data-prop="damage" data-id="${b.id}" />
             <span class="faq-dot" data-faq="damage">?</span>
           </div>
+
           <div class="field"><label>Speed:</label>
             <input class="small-input" type="number" value="${b.speed}" data-prop="speed" data-id="${b.id}" />
             <span class="faq-dot" data-faq="speed">?</span>
           </div>
         </div>
-        <div style="display:flex;gap:8px;margin-top:8px;">
-          <button class="add-btn weapon-btn" data-id="${b.id}">Weapons</button>
+
+        <div style="display:flex;gap:8px;margin-top:8px;align-items:center;">
+          <div class="toggle ${b.weaponEnabled ? 'on' : ''}" data-toggle="${b.id}">
+            <div class="knob"></div>
+          </div>
+          <div style="font-size:13px;color:#24343e;font-weight:700;">Weapon</div>
+          <button class="weapon-btn" data-id="${b.id}">Weapons</button>
+          <div style="flex:1;"></div>
         </div>
+
+        <div style="margin-top:8px;"><small class="defeated-label" data-def="${b.id}" style="color:#b33;display:none">DEFEATED</small></div>
       </div>
     `;
-    // delete
+
+    // wire delete
     card.querySelector('.delete-btn').addEventListener('click', ()=>{
       const idx = balls.findIndex(x=>x.id===b.id);
       if(idx>=0){ balls.splice(idx,1); card.remove(); updateAddButton(); drawPreview(); }
     });
+
     // name
     card.querySelector('.name-input').addEventListener('input', (e)=>{ b.name = e.target.value; drawPreview(); });
+
     // props
     card.querySelectorAll('[data-prop]').forEach(inp=>{
       inp.addEventListener('input', (e)=>{
         const p = e.target.getAttribute('data-prop');
-        const val = e.target.value;
-        if(p==='hpType'){
+        let val = e.target.value;
+        if(p === 'hpType'){
           b.hpType = val;
-          if(val==='segmented'){ b.segments = Math.max(1, Math.min(10, Math.floor(Number(b.segments||5)))); b.hpCur = b.segments; }
+          if(val === 'segmented'){ b.segments = Math.max(1, Math.min(10, Math.floor(Number(b.segments||5)))); b.hpCur = b.segments; }
           else { b.hpCur = Number(b.maxHP); }
-        } else if(p==='segments'){
+        } else if(p === 'segments'){
           let v = Math.floor(Number(val) || 1);
           v = Math.max(1, Math.min(10, v));
           b.segments = v;
@@ -195,7 +225,7 @@
           e.target.value = v;
         } else {
           b[p] = Number(val);
-          if(p==='maxHP'){ if(b.hpType==='segmented'){ b.segments = Math.max(1, Math.min(10, Math.floor(Number(b.maxHP)))); b.hpCur = b.segments; } else b.hpCur = Number(b.maxHP); }
+          if(p === 'maxHP'){ if(b.hpType==='segmented'){ b.segments = Math.max(1, Math.min(10, Math.floor(Number(b.maxHP)))); b.hpCur = b.segments; } else b.hpCur = Number(b.maxHP); }
         }
         // warnings
         const warnSpan = document.querySelector(`.attr-warn[data-warn="${b.id}"]`);
@@ -206,19 +236,28 @@
       });
     });
 
-    // faq dots
+    // faq
     card.querySelectorAll('.faq-dot').forEach(d=>{ d.addEventListener('mouseenter', ()=>showFaq(d)); d.addEventListener('mouseleave', hideFaq); });
 
     // icon picker
-    card.querySelector('.icon-picker').addEventListener('click', ()=>{
-      selectedIconTarget = b.id;
-      iconModal.classList.remove('hidden');
-      modalColor.value = colorToHex(b.color) || '#ff7f50';
-      modalFile.value = '';
+    card.querySelector('.icon-picker').addEventListener('click', ()=>{ selectedIconTarget = b.id; iconModal.classList.remove('hidden'); modalFile.value=''; modalColor.value = colorToHex(b.color) || '#ff7f50'; });
+
+    // weapon toggle
+    const toggle = card.querySelector(`.toggle[data-toggle="${b.id}"]`);
+    const weaponBtn = card.querySelector(`.weapon-btn[data-id="${b.id}"]`);
+    function setWeaponState(enabled){
+      b.weaponEnabled = !!enabled;
+      if(enabled){ toggle.classList.add('on'); weaponBtn.disabled = false; weaponBtn.classList.remove('disabled'); }
+      else { toggle.classList.remove('on'); weaponBtn.disabled = true; weaponBtn.classList.add('disabled'); }
+    }
+    setWeaponState(b.weaponEnabled);
+    toggle.addEventListener('click', ()=>{
+      setWeaponState(!b.weaponEnabled);
     });
 
-    // weapons button
-    card.querySelector('.weapon-btn').addEventListener('click', ()=>{
+    // weapon open
+    weaponBtn.addEventListener('click', ()=>{
+      if(!b.weaponEnabled) return;
       currentWeaponTarget = b.id;
       const w = b.weapon || {};
       weaponDamage.value = w.damage || 8;
@@ -234,26 +273,21 @@
     ballListEl.appendChild(card);
     updateIconPreview(b);
     // warnings initial
-    const warns = computeWarnings(b);
     const warnSpan = document.querySelector(`.attr-warn[data-warn="${b.id}"]`);
+    const warns = computeWarnings(b);
     warnSpan.innerText = warns.length ? `Excessive ${warns.join(', ')} can cause FPS issues` : '';
   }
 
   // faq popup
   let faqEl = null;
-  function showFaq(dot){
-    hideFaq();
-    const key = dot.getAttribute('data-faq');
-    const text = { hp:'Segmented HP = whole segments lost per hit. Normal = numeric HP.', regen:'HP per second regen', damage:'Damage dealt on hit', speed:'Movement speed at battle start' }[key] || 'Info';
-    faqEl = document.createElement('div'); faqEl.className='faq-popup'; faqEl.style.position='absolute'; faqEl.style.background='#fff'; faqEl.style.padding='8px 10px'; faqEl.style.border='1px solid #e5eef8'; faqEl.style.borderRadius='8px'; faqEl.innerText = text;
-    document.body.appendChild(faqEl); const r = dot.getBoundingClientRect(); faqEl.style.left = (r.right + 8) + 'px'; faqEl.style.top = (r.top - 4) + 'px';
-  }
+  function showFaq(dot){ hideFaq(); const key = dot.getAttribute('data-faq'); const text = { hp:'Segmented HP = whole segments lost per hit. Normal = numeric HP.', regen:'HP per second regen', damage:'Damage dealt on hit', speed:'Movement speed at battle start' }[key] || 'Info'; faqEl = document.createElement('div'); faqEl.className='faq-popup'; faqEl.style.position='absolute'; faqEl.style.background='#fff'; faqEl.style.padding='8px 10px'; faqEl.style.border='1px solid #e5eef8'; faqEl.style.borderRadius='8px'; faqEl.innerText = text; document.body.appendChild(faqEl); const r = dot.getBoundingClientRect(); faqEl.style.left = (r.right + 8) + 'px'; faqEl.style.top = (r.top - 4) + 'px'; }
   function hideFaq(){ if(faqEl){ faqEl.remove(); faqEl=null; } }
 
-  // modal apply color/image
+  // modal apply
   modalApply.addEventListener('click', ()=>{
     if(!selectedIconTarget) return;
-    const b = balls.find(x=>x.id===selectedIconTarget); if(!b) return;
+    const b = balls.find(x=>x.id===selectedIconTarget);
+    if(!b) return;
     const file = modalFile.files && modalFile.files[0];
     if(file){
       const reader = new FileReader();
@@ -265,7 +299,7 @@
     closeIconModal();
   });
   modalCancel.addEventListener('click', closeIconModal);
-  function closeIconModal(){ iconModal.classList.add('hidden'); selectedIconTarget = null; modalFile.value = ''; }
+  function closeIconModal(){ iconModal.classList.add('hidden'); selectedIconTarget=null; modalFile.value=''; }
 
   function updateIconPreview(b){
     const el = document.querySelector(`.icon-picker[data-id="${b.id}"] .icon-preview`);
@@ -274,57 +308,62 @@
     else { el.style.backgroundImage=''; el.style.backgroundColor = b.color; }
   }
 
-  // draw preview
+  // draw preview (arena)
   function drawPreview(){
     if(!ctx) ctx = spawnCanvas.getContext('2d');
     const cw = spawnCanvas.clientWidth, ch = spawnCanvas.clientHeight;
     ctx.clearRect(0,0,spawnCanvas.width/DPR, spawnCanvas.height/DPR);
-    // white arena
     ctx.fillStyle = '#fff'; ctx.fillRect(0,0,cw,ch);
     // grid
     ctx.strokeStyle = 'rgba(15,30,45,0.03)'; ctx.lineWidth = 1;
     for(let x=0;x<cw;x+=40){ ctx.beginPath(); ctx.moveTo(x+0.5,0); ctx.lineTo(x+0.5,ch); ctx.stroke(); }
     for(let y=0;y<ch;y+=40){ ctx.beginPath(); ctx.moveTo(0,y+0.5); ctx.lineTo(cw,y+0.5); ctx.stroke(); }
 
-    // draw zone (visual)
+    // zone visual
     const centerX = cw * zone.centerX, centerY = ch * zone.centerY;
-    const startRadius = (Math.min(cw,ch)/2) * (zone.startPct/100);
-    if(zone.running){
-      const t = (performance.now() - zone.startTime)/1000;
-      const rNow = computeZoneRadius(t);
+    const minDim = Math.min(cw,ch);
+    const startR = (minDim/2) * (zone.startPct/100);
+    if(zone.visible){
+      const elapsed = (performance.now() - zone.startTime)/1000;
+      const rNow = computeZoneRadius(elapsed, startR);
       ctx.beginPath(); ctx.fillStyle = 'rgba(255,230,230,0.065)'; ctx.arc(centerX, centerY, rNow, 0, Math.PI*2); ctx.fill();
       ctx.strokeStyle = 'rgba(200,80,80,0.25)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(centerX, centerY, rNow, 0, Math.PI*2); ctx.stroke();
-    } else {
-      ctx.beginPath(); ctx.fillStyle = 'rgba(240,240,240,0.02)'; ctx.arc(centerX, centerY, startRadius, 0, Math.PI*2); ctx.fill();
     }
 
-    // balls
+    // draw balls & weapons
     balls.forEach(b=>{
-      if(!b.alive) return;
-      ctx.beginPath(); ctx.fillStyle = b.color || '#ccc'; ctx.arc(b.x,b.y,b.r,0,Math.PI*2); ctx.fill();
-      ctx.lineWidth = 2; ctx.strokeStyle = '#e6eef6'; ctx.stroke();
-      // image
-      if(b._imgObj && b._imgObj.complete){ ctx.save(); ctx.beginPath(); ctx.arc(b.x,b.y,b.r-1,0,Math.PI*2); ctx.clip(); ctx.drawImage(b._imgObj, b.x-b.r, b.y-b.r, b.r*2, b.r*2); ctx.restore(); }
-      // name
-      ctx.fillStyle = '#07202a'; ctx.font='12px Inter, Arial'; ctx.textAlign='center'; ctx.fillText(b.name, b.x, b.y + b.r + 14);
-      // health bar
+      // show only if alive & not defeated (defeated will be invisible in arena but editor entry remains)
+      if(b.alive && !b.defeated){
+        ctx.beginPath(); ctx.fillStyle = b.color || '#ccc'; ctx.arc(b.x,b.y,b.r,0,Math.PI*2); ctx.fill();
+        ctx.lineWidth = 2; ctx.strokeStyle = '#e6eef6'; ctx.stroke();
+        if(b._imgObj && b._imgObj.complete){ ctx.save(); ctx.beginPath(); ctx.arc(b.x,b.y,b.r-1,0,Math.PI*2); ctx.clip(); ctx.drawImage(b._imgObj, b.x-b.r, b.y-b.r, b.r*2, b.r*2); ctx.restore(); }
+      }
+      // name (always visible)
+      ctx.fillStyle = '#07202a'; ctx.font='12px Inter, Arial'; ctx.textAlign='center';
+      ctx.fillText(b.name, b.x, b.y + b.r + 14);
+
+      // healthbar (if alive show remaining even if defeated show 0)
       const barW = Math.max(50, b.r*3), barH = 8; const bx = b.x - barW/2, by = b.y + b.r + 18;
       ctx.fillStyle = '#e6eef6'; ctx.fillRect(bx,by,barW,barH);
       if(b.hpType === 'segmented'){
         const seg = Math.max(1, Math.min(10, b.segments || 5));
         const segW = Math.max(6, barW/seg);
-        for(let i=0;i<seg;i++){ ctx.fillStyle = (i < b.hpCur) ? '#6ce0ff' : '#ffffff'; ctx.fillRect(bx + i*segW + 1, by + 1, segW - 2, barH - 2); }
+        for(let i=0;i<seg;i++){
+          ctx.fillStyle = (i < Math.max(0, Math.floor(b.hpCur || 0))) ? '#6ce0ff' : '#ffffff';
+          ctx.fillRect(bx + i*segW + 1, by + 1, segW - 2, barH - 2);
+        }
       } else {
-        const pct = Math.max(0, Math.min(1, (b.hpCur||0)/(b.maxHP||1)));
+        const pct = Math.max(0, Math.min(1, (b.hpCur||0) / (b.maxHP||1)));
         const rcol = Math.floor(255*(1-pct)), gcol = Math.floor(200*pct);
-        ctx.fillStyle = `rgb(${rcol}, ${gcol}, 40)`; ctx.fillRect(bx+1,by+1,(barW-2) * pct, barH-2);
+        ctx.fillStyle = `rgb(${rcol}, ${gcol}, 40)`;
+        ctx.fillRect(bx + 1, by + 1, (barW - 2) * pct, barH - 2);
       }
       ctx.strokeStyle = '#cfeaf6'; ctx.strokeRect(bx,by,barW,barH);
 
-      // weapon visualization: line and optionally image
-      if(b.weapon){
+      // weapon drawing if enabled and alive
+      if(b.weaponEnabled && b.alive && !b.defeated){
         const w = b.weapon;
-        const angle = (w.angle || 0) * Math.PI/180;
+        const angle = ((w.angle || 0) + 90) * Math.PI/180; // rotate +90 so default up-facing asset shows to the right
         const tipX = b.x + Math.cos(angle) * (b.r + (w.length||48));
         const tipY = b.y + Math.sin(angle) * (b.r + (w.length||48));
         ctx.beginPath(); ctx.moveTo(b.x,b.y); ctx.lineTo(tipX, tipY); ctx.lineWidth = w.width || 8; ctx.strokeStyle = 'rgba(20,30,40,0.95)'; ctx.stroke();
@@ -335,15 +374,19 @@
     });
   }
 
-  function colorToHex(c){ if(!c) return '#ff7f50'; if(c[0]==='#') return c; try{ const ctx2=document.createElement('canvas').getContext('2d'); ctx2.fillStyle=c; return ctx2.fillStyle;}catch(e){return '#ff7f50';} }
+  function colorToHex(c){ if(!c) return '#ff7f50'; if(c[0]==='#') return c; try{ const ctx2=document.createElement('canvas').getContext('2d'); ctx2.fillStyle=c; return ctx2.fillStyle; }catch(e){ return '#ff7f50'; } }
 
-  // dragging in preview
+  // dragging
   let dragging = null, dragOffset = {x:0,y:0};
   spawnCanvas.addEventListener('pointerdown', (e)=>{
     const rect = spawnCanvas.getBoundingClientRect(); const x = e.clientX - rect.left, y = e.clientY - rect.top;
     for(let i=balls.length-1;i>=0;i--){
-      const b=balls[i];
-      if(Math.hypot(b.x-x,b.y-y) <= b.r + 6){ dragging = b; dragOffset.x = x - b.x; dragOffset.y = y - b.y; spawnCanvas.setPointerCapture(e.pointerId); break; }
+      const b = balls[i];
+      if(Math.hypot(b.x-x,b.y-y) <= b.r + 6 && b.alive && !b.defeated){
+        dragging = b; dragOffset.x = x - b.x; dragOffset.y = y - b.y;
+        spawnCanvas.setPointerCapture(e.pointerId);
+        break;
+      }
     }
   });
   spawnCanvas.addEventListener('pointermove', (e)=>{
@@ -355,77 +398,98 @@
   });
   spawnCanvas.addEventListener('pointerup', (e)=>{ if(dragging){ spawnCanvas.releasePointerCapture(e.pointerId); dragging = null; } });
 
-  // start simulation flow
+  // simulation
   let simRunning = false;
   let last = 0;
   const pairCooldown = new Map();
 
-  function startSimulation(){
-    // hide editor UI
-    const editorArea = document.querySelector('.editor-area');
-    if(editorArea) editorArea.classList.add('hidden');
-    previewTitle.innerText = 'Battle Arena';
+  function startSimulationFlow(){
+    if(balls.length < 2){ alert('Need at least 2 balls to start.'); return; }
 
-    // apply zone settings
+    // grey-out editor and disable interactions
+    const editorArea = document.querySelector('.editor-area');
+    if(editorArea) editorArea.classList.add('disabled');
+
+    // zone config
     zone.startPct = Number(zoneStart.value) || 100;
+    zone.spawnDelay = Number(zoneSpawnDelay.value) || 1;
     zone.delay = Number(zoneDelay.value) || 8;
     zone.duration = Number(zoneDuration.value) || 30;
     zone.dps = Number(zoneDPS.value) || 4;
     zone.damageDelay = Number(zoneDamageDelay.value) || 0.5;
     zone.startTime = performance.now();
+    zone.visible = false;
     zone.running = true;
 
-    // init ball stats and velocities & clamp segments
+    // initialize ball stats & velocities
     balls.forEach(b=>{
+      b.defeated = false;
       b.alive = true;
       if(b.hpType === 'segmented'){ b.segments = Math.max(1, Math.min(10, Math.floor(b.segments || 5))); b.hpCur = b.segments; }
       else b.hpCur = Number(b.maxHP) || 100;
-      const ang = Math.random()*Math.PI*2; const sp = Number(b.speed) || 120;
+      // set random velocity based on speed attribute
+      const ang = Math.random() * Math.PI * 2; const sp = Number(b.speed) || 120;
       b.vx = Math.cos(ang) * sp; b.vy = Math.sin(ang) * sp;
-      if(b.weapon && b.weapon._imgObj && !b.weapon._imgObj.complete){ /* ensures image loaded, else continue */ }
+      // ensure weapon image loaded
+      if(b.weapon && b.weapon.img && !b.weapon._imgObj) { b.weapon._imgObj = new Image(); b.weapon._imgObj.src = b.weapon.img; }
     });
 
-    simRunning = true;
-    last = performance.now();
-    requestAnimationFrame(simLoop);
+    overlay.classList.remove('hidden'); loadingText.innerText = 'Initializing...'; countdownEl.classList.add('hidden');
+    setTimeout(()=>{
+      loadingText.innerText = '';
+      runCountdown(3, ()=>{
+        overlay.classList.add('hidden');
+        simRunning = true;
+        last = performance.now();
+        zone.startTime = performance.now(); // reset
+        // delayed zone visibility (spawnDelay)
+        setTimeout(()=>{ zone.visible = true; }, zone.spawnDelay * 1000);
+        requestAnimationFrame(simLoop);
+      });
+    }, 600);
   }
 
-  function computeZoneRadius(elapsedS){
-    // before closure start: return start radius
-    const minDim = Math.min(spawnCanvas.clientWidth, spawnCanvas.clientHeight);
-    const startR = (minDim/2) * (zone.startPct/100);
-    if(elapsedS <= zone.delay) return startR;
-    const t = Math.min(zone.duration, Math.max(0, elapsedS - zone.delay));
-    const endR = 0; // close to center
+  function computeZoneRadius(elapsed, startR){
+    if(elapsed <= zone.delay) return startR;
+    const t = Math.min(zone.duration, Math.max(0, elapsed - zone.delay));
     const frac = t / zone.duration;
-    const rNow = startR * (1 - frac) + endR * frac;
-    return rNow;
+    const rNow = startR * (1 - frac);
+    return Math.max(0, rNow);
   }
 
   function simLoop(now){
     const dt = Math.min(0.04, (now - last)/1000);
     last = now;
     const w = spawnCanvas.clientWidth, h = spawnCanvas.clientHeight;
+
     // update positions
-    for(const b of balls){ if(!b.alive) continue; b.x += (b.vx||0) * dt; b.y += (b.vy||0) * dt;
-      if(b.x - b.r < 0){ b.x = b.r; b.vx *= -1;} if(b.y - b.r < 0){ b.y = b.r; b.vy *= -1;}
-      if(b.x + b.r > w){ b.x = w - b.r; b.vx *= -1;} if(b.y + b.r > h){ b.y = h - b.r; b.vy *= -1;}
+    for(const b of balls){
+      if(!b.alive || b.defeated) continue;
+      b.x += (b.vx || 0) * dt;
+      b.y += (b.vy || 0) * dt;
+      if(b.x - b.r < 0){ b.x = b.r; b.vx *= -1; }
+      if(b.y - b.r < 0){ b.y = b.r; b.vy *= -1; }
+      if(b.x + b.r > w){ b.x = w - b.r; b.vx *= -1; }
+      if(b.y + b.r > h){ b.y = h - b.r; b.vy *= -1; }
     }
 
-    // update weapon angles
-    for(const b of balls){ if(!b.alive || !b.weapon) continue; b.weapon.angle = (b.weapon.angle || 0) + (b.weapon.rotSpeed||0)*dt; if(b.weapon.angle>360) b.weapon.angle -= 360; }
+    // update weapon angles (rotate)
+    for(const b of balls){ if(!b.alive || b.defeated) continue; if(b.weaponEnabled) b.weapon.angle = ((b.weapon.angle||0) + (b.weapon.rotSpeed||180) * dt) % 360; }
 
-    // ball-ball collisions + damage
+    // collisions & damage (ball-ball)
     for(let i=0;i<balls.length;i++){
-      const A = balls[i]; if(!A.alive) continue;
+      const A = balls[i]; if(!A.alive || A.defeated) continue;
       for(let j=i+1;j<balls.length;j++){
-        const B = balls[j]; if(!B.alive) continue;
-        const dx = B.x - A.x, dy = B.y - A.y; const dist = Math.hypot(dx,dy); const minD = A.r + B.r;
+        const B = balls[j]; if(!B.alive || B.defeated) continue;
+        const dx = B.x - A.x, dy = B.y - A.y;
+        const dist = Math.hypot(dx,dy); const minD = A.r + B.r;
         if(dist < minD && dist > 0){
           const nx = dx/dist, ny = dy/dist;
           const p = 2*(A.vx*nx + A.vy*ny - B.vx*nx - B.vy*ny)/2;
           A.vx -= p*nx; A.vy -= p*ny; B.vx += p*nx; B.vy += p*ny;
-          const overlap = (minD - dist)/2; A.x -= nx*overlap; A.y -= ny*overlap; B.x += nx*overlap; B.y += ny*overlap;
+          const overlap = (minD - dist)/2;
+          A.x -= nx*overlap; A.y -= ny*overlap; B.x += nx*overlap; B.y += ny*overlap;
+
           const key = pairKey(A,B); const nowMs = performance.now();
           if(!pairCooldown.has(key) || nowMs - pairCooldown.get(key) > 250){
             applyDamage(A,B); pairCooldown.set(key, nowMs);
@@ -434,88 +498,101 @@
       }
     }
 
-    // weapon tip collisions (weapon vs ball and weapon vs weapon parry)
+    // weapon tip collisions + parry
     for(const A of balls){
-      if(!A.alive || !A.weapon) continue;
+      if(!A.alive || A.defeated || !A.weaponEnabled) continue;
       const wA = A.weapon;
-      const angleA = (wA.angle || 0) * Math.PI/180;
+      const angleA = ((wA.angle || 0) + 90) * Math.PI/180; // align asset facing right
       const tipAx = A.x + Math.cos(angleA) * (A.r + (wA.length||48));
       const tipAy = A.y + Math.sin(angleA) * (A.r + (wA.length||48));
-      // check other balls
+      // check against other balls
       for(const B of balls){
-        if(!B.alive || B.id === A.id) continue;
+        if(!B.alive || B.defeated || B.id === A.id) continue;
+        // check tip-to-ball hit
         const dToBall = Math.hypot(tipAx - B.x, tipAy - B.y);
         if(dToBall < (wA.width||8) + B.r - 4){
-          // if B has weapon, consider weapon-weapon parry
-          const wB = B.weapon;
-          if(wB){
-            // check tip-to-tip
-            const angleB = (wB.angle || 0) * Math.PI/180;
+          // weapon-weapon parry check
+          if(B.weaponEnabled){
+            const wB = B.weapon;
+            const angleB = ((wB.angle || 0) + 90) * Math.PI/180;
             const tipBx = B.x + Math.cos(angleB) * (B.r + (wB.length||48));
             const tipBy = B.y + Math.sin(angleB) * (B.r + (wB.length||48));
             const wdist = Math.hypot(tipAx - tipBx, tipAy - tipBy);
             if(wdist < ((wA.width||8) + (wB.width||8)) * 0.9){
               const roll = Math.random()*100;
               if(roll < Math.max(wA.parry||0, wB.parry||0)){
-                // parry - reverse both rotation directions
-                wA.rotSpeed = -(wA.rotSpeed || 180); wB.rotSpeed = -(wB.rotSpeed || 180);
+                // parry - reverse rotation directions
+                wA.rotSpeed = -(wA.rotSpeed||180); wB.rotSpeed = -(wB.rotSpeed||180);
                 continue;
               }
             }
           }
           // apply weapon damage to B
           const dmg = Number(wA.damage) || 1;
-          if(B.hpType === 'segmented'){ const loss = Math.max(1, Math.floor(dmg)); B.hpCur = Math.max(0, B.hpCur - loss); if(B.hpCur <= 0) B.alive = false; }
-          else { B.hpCur = Math.max(0, B.hpCur - dmg); if(B.hpCur <= 0) B.alive = false; }
+          if(B.hpType === 'segmented'){ const loss = Math.max(1, Math.floor(dmg)); B.hpCur = Math.max(0, B.hpCur - loss); if(B.hpCur <= 0) B.defeated = true; }
+          else { B.hpCur = Math.max(0, B.hpCur - dmg); if(B.hpCur <= 0) B.defeated = true; }
         }
       }
     }
 
-    // regen for normal HP
-    for(const b of balls){ if(!b.alive) continue; if(b.hpType !== 'segmented' && b.regen) b.hpCur = Math.min(b.maxHP, b.hpCur + b.regen * dt); }
+    // regen (normal)
+    for(const b of balls){ if(!b.alive || b.defeated) continue; if(b.hpType !== 'segmented' && b.regen) b.hpCur = Math.min(b.maxHP, b.hpCur + b.regen * dt); }
 
-    // Zone damage: compute radius and apply damage to balls outside after damage delay
+    // zone damage applied after damageDelay once zone visible & past delay
     const elapsed = (performance.now() - zone.startTime)/1000;
-    const rNow = computeZoneRadius(elapsed);
-    if(elapsed >= zone.delay + (zone.damageDelay || 0)){
-      // apply continuous DPS for balls outside radius (damage per frame = dps * dt)
+    const minDim = Math.min(spawnCanvas.clientWidth, spawnCanvas.clientHeight);
+    const startR = (minDim/2) * (zone.startPct/100);
+    if(zone.visible && elapsed >= zone.delay + zone.damageDelay){
+      const rNow = computeZoneRadius(elapsed, startR);
       for(const b of balls){
-        if(!b.alive) continue;
+        if(!b.alive || b.defeated) continue;
         const cx = spawnCanvas.clientWidth * zone.centerX, cy = spawnCanvas.clientHeight * zone.centerY;
         const d = Math.hypot(b.x - cx, b.y - cy);
         if(d > rNow){
           const dmg = (zone.dps || 0) * dt;
-          if(b.hpType === 'segmented'){ const loss = Math.max(1, Math.floor(dmg)); b.hpCur = Math.max(0, b.hpCur - loss); if(b.hpCur <= 0) b.alive = false; }
-          else { b.hpCur = Math.max(0, b.hpCur - dmg); if(b.hpCur <= 0) b.alive = false; }
+          if(b.hpType === 'segmented'){ const loss = Math.max(1, Math.floor(dmg)); b.hpCur = Math.max(0, b.hpCur - loss); if(b.hpCur <= 0) b.defeated = true; }
+          else { b.hpCur = Math.max(0, b.hpCur - dmg); if(b.hpCur <= 0) b.defeated = true; }
         }
       }
     }
 
-    // remove dead balls and cards
-    for(let i = balls.length -1; i>=0; i--){ if(!balls[i].alive){ const card = document.querySelector(`.ball-card[data-id="${balls[i].id}"]`); if(card) card.remove(); balls.splice(i,1); } }
+    // mark defeated balls (they stay in editor but are removed from arena)
+    balls.forEach(b=>{
+      const label = document.querySelector(`.defeated-label[data-def="${b.id}"]`);
+      if(b.defeated){ b.alive = false; if(label) label.style.display = 'block'; }
+      else if(label) label.style.display = 'none';
+    });
 
     drawPreview();
 
-    const alive = balls.filter(b=>b.alive);
-    if(alive.length <= 1){ simRunning = false; overlay.classList.add('hidden'); showWinner(alive[0] || null); return; }
+    const aliveCount = balls.filter(x => x.alive && !x.defeated).length;
+    if(aliveCount <= 1){
+      simRunning = false;
+      overlay.classList.add('hidden');
+      // enable editor
+      const editorArea = document.querySelector('.editor-area');
+      if(editorArea) editorArea.classList.remove('disabled');
+      // show winner
+      const winner = balls.find(x=>x.alive && !x.defeated) || null;
+      showWinner(winner);
+      return;
+    }
     requestAnimationFrame(simLoop);
   }
 
   function pairKey(a,b){ return a.id < b.id ? `${a.id}-${b.id}` : `${b.id}-${a.id}`; }
 
-  // damage from ball collisions
   function applyDamage(A,B){
     const dmgA = Number(A.damage) || 1;
     const dmgB = Number(B.damage) || 1;
     deal(A,B,dmgA); deal(B,A,dmgB);
   }
   function deal(attacker, victim, dmg){
-    if(!victim.alive) return;
-    if(victim.hpType === 'segmented'){ const loss = Math.max(1, Math.floor(dmg)); victim.hpCur = Math.max(0, victim.hpCur - loss); if(victim.hpCur <= 0) victim.alive = false; }
-    else { victim.hpCur = Math.max(0, victim.hpCur - dmg); if(victim.hpCur <= 0) victim.alive = false; }
+    if(!victim.alive || victim.defeated) return;
+    if(victim.hpType === 'segmented'){ const loss = Math.max(1, Math.floor(dmg)); victim.hpCur = Math.max(0, victim.hpCur - loss); if(victim.hpCur <= 0) victim.defeated = true; }
+    else { victim.hpCur = Math.max(0, victim.hpCur - dmg); if(victim.hpCur <= 0) victim.defeated = true; }
   }
 
-  // winner
   function showWinner(b){
     winnerPopup.classList.remove('hidden');
     if(!b){ winnerText.innerText = 'No winner'; winnerIcon.style.background = '#fff'; }
@@ -525,55 +602,73 @@
       else { winnerIcon.style.backgroundImage = ''; winnerIcon.style.backgroundColor = b.color || '#ddd'; }
     }
   }
+
   exitEditor.addEventListener('click', ()=>{
     winnerPopup.classList.add('hidden');
-    const editorArea = document.querySelector('.editor-area');
-    if(editorArea) editorArea.classList.remove('hidden');
-    balls.forEach(bb=>{ bb.vx = bb.vy = 0; });
+    // editor is already enabled by the end of the match flow
     drawPreview();
   });
-  exitMenu.addEventListener('click', ()=> location.href = 'index.html');
+  exitMenu.addEventListener('click', ()=>{ location.href = 'index.html'; });
 
-  // start button flow
-  startBtn.addEventListener('click', ()=>{
-    if(balls.length < 2){ alert('Need at least 2 balls to start.'); return; }
-    // init ammo and velocities etc done in startSimulation
-    overlay.classList.remove('hidden'); loadingText.innerText = 'Initializing...'; countdownEl.classList.add('hidden');
-    setTimeout(()=>{ loadingText.innerText = ''; runCountdown(3, ()=>{ overlay.classList.add('hidden'); startSimulation(); }); }, 650);
+  // End Game button (stops simulation and returns to editor)
+  endBtn.addEventListener('click', ()=>{
+    if(simRunning){
+      simRunning = false;
+      overlay.classList.add('hidden');
+      // re-enable editor
+      const editorArea = document.querySelector('.editor-area');
+      if(editorArea) editorArea.classList.remove('disabled');
+      zone.running = false; zone.visible = false;
+      // reset defeated -> keep defeated state but stop movement
+      balls.forEach(b=>{ b.vx = b.vy = 0; });
+      drawPreview();
+    }
   });
 
+  // Start button flow
+  startBtn.addEventListener('click', startSimulationFlow);
+
+  // run countdown
   function runCountdown(n, cb){
-    countdownEl.classList.remove('hidden'); let count=n; countdownEl.innerText = count;
+    countdownEl.classList.remove('hidden'); let count = n; countdownEl.innerText = count;
     const tick = setInterval(()=>{
       count--;
       if(count>0){ animateNumber(count); countdownEl.innerText = count; }
-      else { animateNumber('GO!'); countdownEl.innerText='GO!'; setTimeout(()=>{ countdownEl.classList.add('hidden'); clearInterval(tick); cb && cb(); }, 700); }
+      else {
+        animateNumber('GO!'); countdownEl.innerText = 'GO!';
+        setTimeout(()=>{ countdownEl.classList.add('hidden'); clearInterval(tick); cb && cb(); }, 700);
+      }
     }, 900);
   }
   function animateNumber(txt){ countdownEl.innerText = txt; countdownEl.animate([{transform:'scale(1.4)',opacity:0},{transform:'scale(1.0)',opacity:1},{transform:'scale(0.85)',opacity:0.1}],{duration:700,easing:'ease-out'}); }
 
-  // preview toggle mobile
-  previewToggle?.addEventListener('click', ()=>{ if(!previewWrap) return; previewWrap.classList.toggle('expanded'); resizeCanvas(); drawPreview(); });
+  // preview toggle (mobile)
+  previewToggle?.addEventListener('click', ()=>{
+    if(!previewWrap) return; previewWrap.classList.toggle('expanded'); resizeCanvas(); drawPreview();
+  });
 
   // back button
   backBtn?.addEventListener('click', ()=>{ document.body.style.opacity = 0; setTimeout(()=> location.href='index.html', 260); });
 
-  // start defaults
-  resizeCanvas(); createBall(); createBall(); updateAddButton(); drawPreview();
+  // initial canvas and 2 default balls
+  resizeCanvas();
+  if(balls.length === 0){ createBall(); createBall(); }
+  updateAddButton();
+  drawPreview();
 
   // add ball
   addBtn?.addEventListener('click', ()=>{ createBall(); });
 
-  // icon picker global listener (for dynamic cards)
+  // global click for dynamic icon-pickers (delegation)
   document.addEventListener('click', (e)=>{
     const ip = e.target.closest('.icon-picker');
-    if(ip){ const id = ip.getAttribute('data-id'); if(!id) return; selectedIconTarget = id; iconModal.classList.remove('hidden'); modalFile.value=''; modalColor.value='#ff7f50'; }
+    if(ip){ selectedIconTarget = ip.getAttribute('data-id'); iconModal.classList.remove('hidden'); modalFile.value=''; modalColor.value='#ff7f50'; }
   });
 
-  // ensure icon updates periodically
+  // ensure icon updates (periodic to catch loads)
   setInterval(()=>{ balls.forEach(b=>updateIconPreview(b)); }, 800);
 
-  // weapon modal preview handling
+  // weapon modal preview
   function renderWeaponPreview(w){
     weaponCtx.clearRect(0,0,weaponCanvas.width,weaponCanvas.height);
     const cx = weaponCanvas.width/2, cy = weaponCanvas.height/2;
@@ -599,17 +694,23 @@
 
   weaponApply.addEventListener('click', ()=>{
     if(!currentWeaponTarget){ weaponModal.classList.add('hidden'); return; }
-    const b = balls.find(x=>x.id===currentWeaponTarget); if(!b){ weaponModal.classList.add('hidden'); return; }
+    const b = balls.find(x=>x.id === currentWeaponTarget); if(!b){ weaponModal.classList.add('hidden'); return; }
     const file = weaponFile.files && weaponFile.files[0];
     const w = b.weapon || {};
-    w.damage = Number(weaponDamage.value) || 8; w.rotSpeed = Number(weaponRot.value) || 180; w.parry = Math.max(0, Math.min(100, Number(weaponParry.value) || 0));
-    w.width = Number(weaponWidth.value) || 10; w.length = Number(weaponLength.value) || 48;
+    w.damage = Number(weaponDamage.value) || 8;
+    w.rotSpeed = Number(weaponRot.value) || 180;
+    w.parry = Math.max(0, Math.min(100, Number(weaponParry.value) || 0));
+    w.width = Number(weaponWidth.value) || 10;
+    w.length = Number(weaponLength.value) || 48;
     if(file){
       const reader = new FileReader();
-      reader.onload = ()=>{ w.img = reader.result; w._imgObj = new Image(); w._imgObj.src = w.img; b.weapon = w; weaponModal.classList.add('hidden'); drawPreview(); };
+      reader.onload = ()=>{
+        w.img = reader.result; w._imgObj = new Image(); w._imgObj.src = w.img; b.weapon = w; weaponModal.classList.add('hidden'); drawPreview();
+      };
       reader.readAsDataURL(file);
     } else {
-      if(!w._imgObj && !w.img){ w.img = '34.png'; w._imgObj = new Image(); w._imgObj.src = w.img; }
+      // use default preset if no upload
+      if(!w._imgObj && !w.img){ w.img = defaultWeaponPreset; w._imgObj = new Image(); w._imgObj.src = w.img; }
       b.weapon = w; weaponModal.classList.add('hidden'); drawPreview();
     }
   });
@@ -625,11 +726,7 @@
     ballPanel.classList.add('hidden'); zonePanel.classList.remove('hidden');
   });
 
-  // weapon & icon modal global apply already set earlier
-  modalApply.addEventListener('click', ()=>{ /* already handled above - but kept for safety */ });
-  modalCancel.addEventListener('click', ()=>{ closeIconModal(); });
-
-  // helper expose drawPreview for debugging
+  // expose drawPreview
   window.drawPreview = drawPreview;
 
 })();
