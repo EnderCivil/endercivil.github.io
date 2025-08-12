@@ -8,8 +8,7 @@
 </head>
 <body class="menu-page">
 
-  <!-- Persistent audio kept outside #app so SPA loads won't replace it.
-       Uses the provided track URL and loops. -->
+  <!-- Persistent audio. No UI to disable. -->
   <audio id="bgAudio" src="https://vgmsite.com/soundtracks/armored-core-nexus/zahvmqai/1-02.%20World%20Navigation.mp3" loop preload="auto" autoplay></audio>
 
   <!-- full-screen bouncing canvas behind UI -->
@@ -41,6 +40,14 @@
           <span class="username">EnderCivil</span>
         </footer>
       </div>
+
+      <div class="menu-right">
+        <div class="right-stage" id="rightStage">
+          <div class="version-badge" id="versionBadge">v0.2</div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Patch notes modal -->
   <div id="newsModal" class="modal hidden" aria-hidden="true">
