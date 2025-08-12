@@ -1,4 +1,4 @@
-// battles.js - editor + preview + simulation with weapons, zone, toggles, persistent editor entries
+// battles.js — updated: fixes + powerups + zone visuals + weapon toggles + robust start/end
 (() => {
   // DOM refs
   const addBtn = document.getElementById('addBallBtn');
@@ -41,8 +41,10 @@
 
   const selBalls = document.getElementById('selBalls');
   const selZone = document.getElementById('selZone');
+  const selPowerups = document.getElementById('selPowerups');
   const ballPanel = document.getElementById('ballPanel');
   const zonePanel = document.getElementById('zonePanel');
+  const powerupsPanel = document.getElementById('powerupsPanel');
 
   // zone inputs
   const zoneStart = document.getElementById('zoneStart');
@@ -52,10 +54,20 @@
   const zoneDPS = document.getElementById('zoneDPS');
   const zoneDamageDelay = document.getElementById('zoneDamageDelay');
 
+  // powerups DOM
+  const addPowerupBtn = document.getElementById('addPowerupBtn');
+  const powerupListEl = document.getElementById('powerupList');
+
+  // defensive: stop main bounce if it's running (covers direct load)
+  if (window.bgBounceController && typeof window.bgBounceController.stop === 'function') {
+    window.bgBounceController.stop();
+  }
+
   // canvas & scale
   let DPR = devicePixelRatio || 1;
   let ctx = null;
   function resizeCanvas(){
+    if (!spawnCanvas) return;
     const r = spawnCanvas.getBoundingClientRect();
     spawnCanvas.width = Math.max(320, Math.round(r.width)) * DPR;
     spawnCanvas.height = Math.max(240, Math.round(r.height)) * DPR;
@@ -69,8 +81,11 @@
   // data model
   const MAX_BALLS = 10;
   let balls = [];
+  let powerups = [];
   let selectedIconTarget = null;
   let currentWeaponTarget = null;
+
+  let rafId = null;
 
   const WARN = { maxHP:2000, damage:800, speed:1200, rotSpeed:1200 };
 
@@ -84,7 +99,6 @@
   const uid = ()=> Math.random().toString(36).slice(2,9);
 
   function getNextBallNumber(){
-    // find smallest positive integer not used by names "Ball N"
     const used = new Set();
     for(const b of balls){
       const m = (b.name || '').match(/^Ball\s+(\d+)$/);
@@ -115,7 +129,7 @@
     const id = uid();
     const name = `Ball ${getNextBallNumber()}`;
     const r = 20;
-    const pos = randomSpawn(r);
+    const pos = (spawnCanvas && spawnCanvas.clientWidth) ? randomSpawn(r) : { x: 40 + balls.length*60, y: 80 + balls.length*40 };
     const b = {
       id, name, color: randColor(), img:null, _imgObj:null,
       maxHP:100, hpType:'normal', regen:0, damage:10, speed:120,
@@ -124,7 +138,6 @@
       weaponEnabled: false,
       weapon: { img: defaultWeaponPreset, _imgObj: new Image(), damage:8, rotSpeed:180, parry:20, width:10, length:48, angle:0 }
     };
-    // load default weapon preset image
     b.weapon._imgObj.src = b.weapon.img;
     balls.push(b);
     renderBallCard(b);
@@ -132,7 +145,7 @@
     drawPreview();
   }
 
-  function updateAddButton(){ addBtn.disabled = balls.length >= MAX_BALLS; }
+  function updateAddButton(){ if(addBtn) addBtn.disabled = balls.length >= MAX_BALLS; }
 
   function computeWarnings(b){
     const warns = [];
@@ -145,21 +158,26 @@
 
   // render ball card with weapon toggle
   function renderBallCard(b){
-    const card = document.createElement('div');
+    // preserve existing card if it exists
+    let card = document.querySelector(`.ball-card[data-id="${b.id}"]`);
+    if(card) return; // already rendered (prevents duplicates)
+
+    card = document.createElement('div');
     card.className = 'ball-card';
     card.dataset.id = b.id;
+    // use details / simple structure; UI styling handled by CSS you already have
     card.innerHTML = `
       <button class="delete-btn" title="Delete">✕</button>
       <div class="icon-picker" data-id="${b.id}" title="Click to set color or upload image">
-        <div class="icon-preview" style="background:${b.color};"></div>
+        <div class="icon-preview" style="background:${b.color}; width:48px;height:48px;border-radius:8px; display:inline-block;"></div>
       </div>
       <div class="card-main">
-        <div class="name-row">
+        <div class="name-row" style="display:flex;gap:8px;align-items:center;">
           <input class="name-input" value="${b.name}" data-id="${b.id}" />
-          <span class="attr-warn" data-warn="${b.id}"></span>
+          <span class="attr-warn" data-warn="${b.id}" style="font-size:12px;color:var(--warn)"></span>
         </div>
 
-        <div class="controls-row">
+        <div class="controls-row" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:8px;">
           <div class="field"><label>HP:</label>
             <input class="small-input" type="number" value="${b.maxHP}" data-prop="maxHP" data-id="${b.id}" />
             <select class="small-input" data-prop="hpType" data-id="${b.id}">
@@ -187,7 +205,7 @@
         </div>
 
         <div style="display:flex;gap:8px;margin-top:8px;align-items:center;">
-          <div class="toggle ${b.weaponEnabled ? 'on' : ''}" data-toggle="${b.id}">
+          <div class="toggle ${b.weaponEnabled ? 'on' : ''}" data-toggle="${b.id}" style="cursor:pointer;">
             <div class="knob"></div>
           </div>
           <div style="font-size:13px;color:#24343e;font-weight:700;">Weapon</div>
@@ -198,17 +216,25 @@
         <div style="margin-top:8px;"><small class="defeated-label" data-def="${b.id}" style="color:#b33;display:none">DEFEATED</small></div>
       </div>
     `;
+    // attach
+    ballListEl.appendChild(card);
 
-    // wire delete
+    // delete handler
     card.querySelector('.delete-btn').addEventListener('click', ()=>{
       const idx = balls.findIndex(x=>x.id===b.id);
-      if(idx>=0){ balls.splice(idx,1); card.remove(); updateAddButton(); drawPreview(); }
+      if(idx>=0){
+        balls.splice(idx,1);
+        // remove card
+        card.remove();
+        updateAddButton();
+        drawPreview();
+      }
     });
 
-    // name
+    // name input
     card.querySelector('.name-input').addEventListener('input', (e)=>{ b.name = e.target.value; drawPreview(); });
 
-    // props
+    // props binding
     card.querySelectorAll('[data-prop]').forEach(inp=>{
       inp.addEventListener('input', (e)=>{
         const p = e.target.getAttribute('data-prop');
@@ -227,7 +253,7 @@
           b[p] = Number(val);
           if(p === 'maxHP'){ if(b.hpType==='segmented'){ b.segments = Math.max(1, Math.min(10, Math.floor(Number(b.maxHP)))); b.hpCur = b.segments; } else b.hpCur = Number(b.maxHP); }
         }
-        // warnings
+        // warnings UI
         const warnSpan = document.querySelector(`.attr-warn[data-warn="${b.id}"]`);
         const warns = computeWarnings(b);
         warnSpan.innerText = warns.length ? `Excessive ${warns.join(', ')} can cause FPS issues` : '';
@@ -236,28 +262,28 @@
       });
     });
 
-    // faq
+    // faq popups
     card.querySelectorAll('.faq-dot').forEach(d=>{ d.addEventListener('mouseenter', ()=>showFaq(d)); d.addEventListener('mouseleave', hideFaq); });
 
     // icon picker
     card.querySelector('.icon-picker').addEventListener('click', ()=>{ selectedIconTarget = b.id; iconModal.classList.remove('hidden'); modalFile.value=''; modalColor.value = colorToHex(b.color) || '#ff7f50'; });
 
-    // weapon toggle
+    // weapon toggle + enable/disable weapon button
     const toggle = card.querySelector(`.toggle[data-toggle="${b.id}"]`);
     const weaponBtn = card.querySelector(`.weapon-btn[data-id="${b.id}"]`);
     function setWeaponState(enabled){
       b.weaponEnabled = !!enabled;
-      if(enabled){ toggle.classList.add('on'); weaponBtn.disabled = false; weaponBtn.classList.remove('disabled'); }
-      else { toggle.classList.remove('on'); weaponBtn.disabled = true; weaponBtn.classList.add('disabled'); }
+      if(enabled){ toggle.classList.add('on'); weaponBtn.disabled = false; }
+      else { toggle.classList.remove('on'); weaponBtn.disabled = true; }
     }
     setWeaponState(b.weaponEnabled);
     toggle.addEventListener('click', ()=>{
       setWeaponState(!b.weaponEnabled);
     });
 
-    // weapon open
+    // open weapon modal
     weaponBtn.addEventListener('click', ()=>{
-      if(!b.weaponEnabled) return;
+      if(weaponBtn.disabled) return;
       currentWeaponTarget = b.id;
       const w = b.weapon || {};
       weaponDamage.value = w.damage || 8;
@@ -269,21 +295,14 @@
       weaponModal.classList.remove('hidden');
       renderWeaponPreview(w);
     });
-
-    ballListEl.appendChild(card);
-    updateIconPreview(b);
-    // warnings initial
-    const warnSpan = document.querySelector(`.attr-warn[data-warn="${b.id}"]`);
-    const warns = computeWarnings(b);
-    warnSpan.innerText = warns.length ? `Excessive ${warns.join(', ')} can cause FPS issues` : '';
   }
 
-  // faq popup
+  // FAQ popup
   let faqEl = null;
   function showFaq(dot){ hideFaq(); const key = dot.getAttribute('data-faq'); const text = { hp:'Segmented HP = whole segments lost per hit. Normal = numeric HP.', regen:'HP per second regen', damage:'Damage dealt on hit', speed:'Movement speed at battle start' }[key] || 'Info'; faqEl = document.createElement('div'); faqEl.className='faq-popup'; faqEl.style.position='absolute'; faqEl.style.background='#fff'; faqEl.style.padding='8px 10px'; faqEl.style.border='1px solid #e5eef8'; faqEl.style.borderRadius='8px'; faqEl.innerText = text; document.body.appendChild(faqEl); const r = dot.getBoundingClientRect(); faqEl.style.left = (r.right + 8) + 'px'; faqEl.style.top = (r.top - 4) + 'px'; }
   function hideFaq(){ if(faqEl){ faqEl.remove(); faqEl=null; } }
 
-  // modal apply
+  // icon modal apply
   modalApply.addEventListener('click', ()=>{
     if(!selectedIconTarget) return;
     const b = balls.find(x=>x.id===selectedIconTarget);
@@ -308,12 +327,13 @@
     else { el.style.backgroundImage=''; el.style.backgroundColor = b.color; }
   }
 
-  // draw preview (arena)
+  // draw preview (arena) — with distinct safe/unsafe fills
   function drawPreview(){
     if(!ctx) ctx = spawnCanvas.getContext('2d');
     const cw = spawnCanvas.clientWidth, ch = spawnCanvas.clientHeight;
     ctx.clearRect(0,0,spawnCanvas.width/DPR, spawnCanvas.height/DPR);
     ctx.fillStyle = '#fff'; ctx.fillRect(0,0,cw,ch);
+
     // grid
     ctx.strokeStyle = 'rgba(15,30,45,0.03)'; ctx.lineWidth = 1;
     for(let x=0;x<cw;x+=40){ ctx.beginPath(); ctx.moveTo(x+0.5,0); ctx.lineTo(x+0.5,ch); ctx.stroke(); }
@@ -323,26 +343,52 @@
     const centerX = cw * zone.centerX, centerY = ch * zone.centerY;
     const minDim = Math.min(cw,ch);
     const startR = (minDim/2) * (zone.startPct/100);
+
     if(zone.visible){
       const elapsed = (performance.now() - zone.startTime)/1000;
       const rNow = computeZoneRadius(elapsed, startR);
-      ctx.beginPath(); ctx.fillStyle = 'rgba(255,230,230,0.065)'; ctx.arc(centerX, centerY, rNow, 0, Math.PI*2); ctx.fill();
-      ctx.strokeStyle = 'rgba(200,80,80,0.25)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(centerX, centerY, rNow, 0, Math.PI*2); ctx.stroke();
+
+      // Draw outside (unsafe) overlay first
+      ctx.save();
+      ctx.fillStyle = 'rgba(255,230,230,0.20)'; // unsafe (storm) color
+      ctx.fillRect(0,0,cw,ch);
+
+      // then draw safe circle to reveal safe area (composite)
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, rNow, 0, Math.PI*2);
+      ctx.fill();
+
+      // reset composite and draw a subtle safe color ring/overlay
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.beginPath();
+      ctx.fillStyle = 'rgba(200,255,230,0.16)'; // safe color (inner)
+      ctx.arc(centerX, centerY, rNow, 0, Math.PI*2);
+      ctx.fill();
+
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = 'rgba(30,120,80,0.14)';
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, rNow, 0, Math.PI*2);
+      ctx.stroke();
+      ctx.restore();
     }
 
     // draw balls & weapons
     balls.forEach(b=>{
-      // show only if alive & not defeated (defeated will be invisible in arena but editor entry remains)
+      // arena: only show balls that are alive and not defeated
       if(b.alive && !b.defeated){
         ctx.beginPath(); ctx.fillStyle = b.color || '#ccc'; ctx.arc(b.x,b.y,b.r,0,Math.PI*2); ctx.fill();
         ctx.lineWidth = 2; ctx.strokeStyle = '#e6eef6'; ctx.stroke();
-        if(b._imgObj && b._imgObj.complete){ ctx.save(); ctx.beginPath(); ctx.arc(b.x,b.y,b.r-1,0,Math.PI*2); ctx.clip(); ctx.drawImage(b._imgObj, b.x-b.r, b.y-b.r, b.r*2, b.r*2); ctx.restore(); }
+        if(b._imgObj && b._imgObj.complete){
+          ctx.save(); ctx.beginPath(); ctx.arc(b.x,b.y,b.r-1,0,Math.PI*2); ctx.clip(); ctx.drawImage(b._imgObj, b.x-b.r, b.y-b.r, b.r*2, b.r*2); ctx.restore();
+        }
       }
-      // name (always visible)
+      // name label (always drawn so editor stays informative)
       ctx.fillStyle = '#07202a'; ctx.font='12px Inter, Arial'; ctx.textAlign='center';
       ctx.fillText(b.name, b.x, b.y + b.r + 14);
 
-      // healthbar (if alive show remaining even if defeated show 0)
+      // health bar (shows current hp or segments even if defeated show 0)
       const barW = Math.max(50, b.r*3), barH = 8; const bx = b.x - barW/2, by = b.y + b.r + 18;
       ctx.fillStyle = '#e6eef6'; ctx.fillRect(bx,by,barW,barH);
       if(b.hpType === 'segmented'){
@@ -360,10 +406,10 @@
       }
       ctx.strokeStyle = '#cfeaf6'; ctx.strokeRect(bx,by,barW,barH);
 
-      // weapon drawing if enabled and alive
+      // weapon drawing if enabled and ball alive
       if(b.weaponEnabled && b.alive && !b.defeated){
         const w = b.weapon;
-        const angle = ((w.angle || 0) + 90) * Math.PI/180; // rotate +90 so default up-facing asset shows to the right
+        const angle = ((w.angle || 0) + 90) * Math.PI/180; // default asset rotated so it appears to the right
         const tipX = b.x + Math.cos(angle) * (b.r + (w.length||48));
         const tipY = b.y + Math.sin(angle) * (b.r + (w.length||48));
         ctx.beginPath(); ctx.moveTo(b.x,b.y); ctx.lineTo(tipX, tipY); ctx.lineWidth = w.width || 8; ctx.strokeStyle = 'rgba(20,30,40,0.95)'; ctx.stroke();
@@ -398,17 +444,22 @@
   });
   spawnCanvas.addEventListener('pointerup', (e)=>{ if(dragging){ spawnCanvas.releasePointerCapture(e.pointerId); dragging = null; } });
 
-  // simulation
+  // simulation runtime
   let simRunning = false;
   let last = 0;
   const pairCooldown = new Map();
 
   function startSimulationFlow(){
+    if(simRunning) return;
     if(balls.length < 2){ alert('Need at least 2 balls to start.'); return; }
 
     // grey-out editor and disable interactions
     const editorArea = document.querySelector('.editor-area');
     if(editorArea) editorArea.classList.add('disabled');
+
+    // UI button states
+    startBtn.disabled = true;
+    endBtn.disabled = false;
 
     // zone config
     zone.startPct = Number(zoneStart.value) || 100;
@@ -427,11 +478,9 @@
       b.alive = true;
       if(b.hpType === 'segmented'){ b.segments = Math.max(1, Math.min(10, Math.floor(b.segments || 5))); b.hpCur = b.segments; }
       else b.hpCur = Number(b.maxHP) || 100;
-      // set random velocity based on speed attribute
       const ang = Math.random() * Math.PI * 2; const sp = Number(b.speed) || 120;
       b.vx = Math.cos(ang) * sp; b.vy = Math.sin(ang) * sp;
-      // ensure weapon image loaded
-      if(b.weapon && b.weapon.img && !b.weapon._imgObj) { b.weapon._imgObj = new Image(); b.weapon._imgObj.src = b.weapon.img; }
+      if(b.weapon && b.weapon.img && !b.weapon._imgObj){ b.weapon._imgObj = new Image(); b.weapon._imgObj.src = b.weapon.img; }
     });
 
     overlay.classList.remove('hidden'); loadingText.innerText = 'Initializing...'; countdownEl.classList.add('hidden');
@@ -442,9 +491,9 @@
         simRunning = true;
         last = performance.now();
         zone.startTime = performance.now(); // reset
-        // delayed zone visibility (spawnDelay)
+        // delayed zone appearance
         setTimeout(()=>{ zone.visible = true; }, zone.spawnDelay * 1000);
-        requestAnimationFrame(simLoop);
+        rafId = requestAnimationFrame(simLoop);
       });
     }, 600);
   }
@@ -458,6 +507,10 @@
   }
 
   function simLoop(now){
+    if(!simRunning){
+      if(rafId) { cancelAnimationFrame(rafId); rafId = null; }
+      return;
+    }
     const dt = Math.min(0.04, (now - last)/1000);
     last = now;
     const w = spawnCanvas.clientWidth, h = spawnCanvas.clientHeight;
@@ -473,7 +526,7 @@
       if(b.y + b.r > h){ b.y = h - b.r; b.vy *= -1; }
     }
 
-    // update weapon angles (rotate)
+    // update weapon angles
     for(const b of balls){ if(!b.alive || b.defeated) continue; if(b.weaponEnabled) b.weapon.angle = ((b.weapon.angle||0) + (b.weapon.rotSpeed||180) * dt) % 360; }
 
     // collisions & damage (ball-ball)
@@ -502,16 +555,13 @@
     for(const A of balls){
       if(!A.alive || A.defeated || !A.weaponEnabled) continue;
       const wA = A.weapon;
-      const angleA = ((wA.angle || 0) + 90) * Math.PI/180; // align asset facing right
+      const angleA = ((wA.angle || 0) + 90) * Math.PI/180;
       const tipAx = A.x + Math.cos(angleA) * (A.r + (wA.length||48));
       const tipAy = A.y + Math.sin(angleA) * (A.r + (wA.length||48));
-      // check against other balls
       for(const B of balls){
         if(!B.alive || B.defeated || B.id === A.id) continue;
-        // check tip-to-ball hit
         const dToBall = Math.hypot(tipAx - B.x, tipAy - B.y);
         if(dToBall < (wA.width||8) + B.r - 4){
-          // weapon-weapon parry check
           if(B.weaponEnabled){
             const wB = B.weapon;
             const angleB = ((wB.angle || 0) + 90) * Math.PI/180;
@@ -521,13 +571,12 @@
             if(wdist < ((wA.width||8) + (wB.width||8)) * 0.9){
               const roll = Math.random()*100;
               if(roll < Math.max(wA.parry||0, wB.parry||0)){
-                // parry - reverse rotation directions
-                wA.rotSpeed = -(wA.rotSpeed||180); wB.rotSpeed = -(wB.rotSpeed||180);
+                wA.rotSpeed = -(wA.rotSpeed||180);
+                wB.rotSpeed = -(wB.rotSpeed||180);
                 continue;
               }
             }
           }
-          // apply weapon damage to B
           const dmg = Number(wA.damage) || 1;
           if(B.hpType === 'segmented'){ const loss = Math.max(1, Math.floor(dmg)); B.hpCur = Math.max(0, B.hpCur - loss); if(B.hpCur <= 0) B.defeated = true; }
           else { B.hpCur = Math.max(0, B.hpCur - dmg); if(B.hpCur <= 0) B.defeated = true; }
@@ -535,10 +584,10 @@
       }
     }
 
-    // regen (normal)
+    // regen
     for(const b of balls){ if(!b.alive || b.defeated) continue; if(b.hpType !== 'segmented' && b.regen) b.hpCur = Math.min(b.maxHP, b.hpCur + b.regen * dt); }
 
-    // zone damage applied after damageDelay once zone visible & past delay
+    // zone damage
     const elapsed = (performance.now() - zone.startTime)/1000;
     const minDim = Math.min(spawnCanvas.clientWidth, spawnCanvas.clientHeight);
     const startR = (minDim/2) * (zone.startPct/100);
@@ -556,7 +605,7 @@
       }
     }
 
-    // mark defeated balls (they stay in editor but are removed from arena)
+    // mark defeated
     balls.forEach(b=>{
       const label = document.querySelector(`.defeated-label[data-def="${b.id}"]`);
       if(b.defeated){ b.alive = false; if(label) label.style.display = 'block'; }
@@ -569,15 +618,17 @@
     if(aliveCount <= 1){
       simRunning = false;
       overlay.classList.add('hidden');
-      // enable editor
       const editorArea = document.querySelector('.editor-area');
       if(editorArea) editorArea.classList.remove('disabled');
-      // show winner
+      startBtn.disabled = false;
+      endBtn.disabled = true;
       const winner = balls.find(x=>x.alive && !x.defeated) || null;
       showWinner(winner);
+      // cancel RAF if present
+      if(rafId){ cancelAnimationFrame(rafId); rafId = null; }
       return;
     }
-    requestAnimationFrame(simLoop);
+    rafId = requestAnimationFrame(simLoop);
   }
 
   function pairKey(a,b){ return a.id < b.id ? `${a.id}-${b.id}` : `${b.id}-${a.id}`; }
@@ -605,30 +656,31 @@
 
   exitEditor.addEventListener('click', ()=>{
     winnerPopup.classList.add('hidden');
-    // editor is already enabled by the end of the match flow
     drawPreview();
   });
   exitMenu.addEventListener('click', ()=>{ location.href = 'index.html'; });
 
-  // End Game button (stops simulation and returns to editor)
+  // End Game button (stops simulation immediately)
   endBtn.addEventListener('click', ()=>{
-    if(simRunning){
-      simRunning = false;
-      overlay.classList.add('hidden');
-      // re-enable editor
-      const editorArea = document.querySelector('.editor-area');
-      if(editorArea) editorArea.classList.remove('disabled');
-      zone.running = false; zone.visible = false;
-      // reset defeated -> keep defeated state but stop movement
-      balls.forEach(b=>{ b.vx = b.vy = 0; });
-      drawPreview();
-    }
+    if(!simRunning) return;
+    simRunning = false;
+    if(rafId){ cancelAnimationFrame(rafId); rafId = null; }
+    overlay.classList.add('hidden');
+    // re-enable editor
+    const editorArea = document.querySelector('.editor-area');
+    if(editorArea) editorArea.classList.remove('disabled');
+    zone.running = false; zone.visible = false;
+    // stop motion but keep defeated flags
+    balls.forEach(b=>{ b.vx = b.vy = 0; });
+    startBtn.disabled = false;
+    endBtn.disabled = true;
+    drawPreview();
   });
 
-  // Start button flow
+  // Start button
   startBtn.addEventListener('click', startSimulationFlow);
 
-  // run countdown
+  // countdown
   function runCountdown(n, cb){
     countdownEl.classList.remove('hidden'); let count = n; countdownEl.innerText = count;
     const tick = setInterval(()=>{
@@ -650,7 +702,7 @@
   // back button
   backBtn?.addEventListener('click', ()=>{ document.body.style.opacity = 0; setTimeout(()=> location.href='index.html', 260); });
 
-  // initial canvas and 2 default balls
+  // initial canvas and create default balls
   resizeCanvas();
   if(balls.length === 0){ createBall(); createBall(); }
   updateAddButton();
@@ -659,13 +711,13 @@
   // add ball
   addBtn?.addEventListener('click', ()=>{ createBall(); });
 
-  // global click for dynamic icon-pickers (delegation)
+  // global click: icon picker delegation
   document.addEventListener('click', (e)=>{
     const ip = e.target.closest('.icon-picker');
     if(ip){ selectedIconTarget = ip.getAttribute('data-id'); iconModal.classList.remove('hidden'); modalFile.value=''; modalColor.value='#ff7f50'; }
   });
 
-  // ensure icon updates (periodic to catch loads)
+  // ensure icon updates periodically
   setInterval(()=>{ balls.forEach(b=>updateIconPreview(b)); }, 800);
 
   // weapon modal preview
@@ -709,24 +761,131 @@
       };
       reader.readAsDataURL(file);
     } else {
-      // use default preset if no upload
       if(!w._imgObj && !w.img){ w.img = defaultWeaponPreset; w._imgObj = new Image(); w._imgObj.src = w.img; }
       b.weapon = w; weaponModal.classList.add('hidden'); drawPreview();
     }
   });
   weaponCancel.addEventListener('click', ()=>{ weaponModal.classList.add('hidden'); currentWeaponTarget = null; });
 
-  // zone selector toggle
+  // Panel selector animations (Balls / Zone / Powerups) using WAAPI (no CSS changes required)
+  function animatePanelSwitch(hideEl, showEl){
+    if(hideEl === showEl) return;
+    // animate out
+    if(hideEl && !hideEl.classList.contains('hidden')){
+      hideEl.animate([{ opacity:1, transform:'translateX(0px)' }, { opacity:0, transform:'translateX(-6px)' }], { duration:200, easing:'ease-out' }).onfinish = () => { hideEl.classList.add('hidden'); hideEl.setAttribute('aria-hidden','true'); };
+    }
+    // animate in
+    if(showEl){
+      showEl.classList.remove('hidden');
+      showEl.setAttribute('aria-hidden','false');
+      showEl.animate([{ opacity:0, transform:'translateX(6px)' }, { opacity:1, transform:'translateX(0px)' }], { duration:240, easing:'ease-out' });
+    }
+  }
+
   selBalls?.addEventListener('click', ()=>{
-    selBalls.classList.add('sel-active'); selZone.classList.remove('sel-active');
-    ballPanel.classList.remove('hidden'); zonePanel.classList.add('hidden');
+    selBalls.classList.add('sel-active'); selZone.classList.remove('sel-active'); selPowerups.classList.remove('sel-active');
+    animatePanelSwitch(zonePanel, ballPanel);
+    animatePanelSwitch(powerupsPanel, ballPanel);
   });
   selZone?.addEventListener('click', ()=>{
-    selZone.classList.add('sel-active'); selBalls.classList.remove('sel-active');
-    ballPanel.classList.add('hidden'); zonePanel.classList.remove('hidden');
+    selZone.classList.add('sel-active'); selBalls.classList.remove('sel-active'); selPowerups.classList.remove('sel-active');
+    animatePanelSwitch(ballPanel, zonePanel);
+    animatePanelSwitch(powerupsPanel, zonePanel);
+  });
+  selPowerups?.addEventListener('click', ()=>{
+    selPowerups.classList.add('sel-active'); selBalls.classList.remove('sel-active'); selZone.classList.remove('sel-active');
+    animatePanelSwitch(ballPanel, powerupsPanel);
+    animatePanelSwitch(zonePanel, powerupsPanel);
   });
 
-  // expose drawPreview
+  // POWERUPS UI logic
+  function renderPowerupCard(p){
+    let card = document.querySelector(`.powerup-card[data-id="${p.id}"]`);
+    if(card) return;
+    card = document.createElement('div');
+    card.className = 'powerup-card';
+    card.dataset.id = p.id;
+    card.innerHTML = `
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div class="icon-preview" style="width:48px;height:48px;border-radius:8px;background:${p.color || '#ddd'}; background-size:cover; background-position:center; ${p.img ? `background-image:url(${p.img});` : '' }"></div>
+        <div style="flex:1;">
+          <input class="powerup-name" value="${p.name}" />
+          <div style="font-size:12px;color:#556">Type: ${p.type || 'Generic'}</div>
+        </div>
+        <button class="delete-powerup">Delete</button>
+      </div>
+      <details style="margin-top:8px;">
+        <summary>HP</summary>
+        <div style="display:flex;flex-direction:column;gap:6px;padding:8px;">
+          <label>HP Change (immediate): <input class="pu-hp-change" type="number" value="${p.hpChange||0}" /></label>
+          <label>HP/s (over time): <input class="pu-hp-per-s" type="number" value="${p.hpPerS||0}" /></label>
+          <label>HP/s Time (s): <input class="pu-hp-time" type="number" value="${p.hpTime||0}" /></label>
+        </div>
+      </details>
+      <details>
+        <summary>Speed</summary>
+        <div style="display:flex;flex-direction:column;gap:6px;padding:8px;">
+          <label>Speed Change (immediate): <input class="pu-speed-change" type="number" value="${p.speedChange||0}" /></label>
+          <label>Temporary Speed Change: <input class="pu-temp-speed" type="number" value="${p.tempSpeed||0}" /></label>
+          <label>Temporary Speed Time (s): <input class="pu-temp-time" type="number" value="${p.tempTime||0}" /></label>
+        </div>
+      </details>
+      <details>
+        <summary>Damage Buff</summary>
+        <div style="display:flex;flex-direction:column;gap:6px;padding:8px;">
+          <label>Damage Change (immediate): <input class="pu-damage-change" type="number" value="${p.damageChange||0}" /></label>
+          <label>Damage/s (over time): <input class="pu-damage-per-s" type="number" value="${p.damagePerS||0}" /></label>
+          <label>Duration (s): <input class="pu-damage-time" type="number" value="${p.damageTime||0}" /></label>
+        </div>
+      </details>
+      <div style="display:flex;gap:8px;margin-top:8px;align-items:center;">
+        <label>Image: <input class="pu-img-file" type="file" accept="image/*" /></label>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px;align-items:center;">
+        <label>Spawn Tmin: <input class="pu-spawn-min" type="number" value="${p.spawnMin||1}" /></label>
+        <label>Spawn Tmax: <input class="pu-spawn-max" type="number" value="${p.spawnMax||5}" /></label>
+        <label>Pickup Size: <input class="pu-size" type="number" value="${p.pickupSize||28}" /></label>
+        <label>Decay Time (s): <input class="pu-decay" type="number" value="${p.decay||12}" /></label>
+      </div>
+    `;
+    powerupListEl.appendChild(card);
+
+    card.querySelector('.delete-powerup').addEventListener('click', ()=>{
+      const idx = powerups.findIndex(x=>x.id===p.id);
+      if(idx>=0) { powerups.splice(idx,1); card.remove(); }
+    });
+
+    // wire file upload
+    const fileInput = card.querySelector('.pu-img-file');
+    fileInput.addEventListener('change', ()=>{
+      const f = fileInput.files && fileInput.files[0];
+      if(!f) return;
+      const r = new FileReader();
+      r.onload = ()=>{ p.img = r.result; card.querySelector('.icon-preview').style.backgroundImage = `url(${p.img})`; };
+      r.readAsDataURL(f);
+    });
+
+    // wire simple inputs to model (live updates)
+    const wire = (sel, prop, cast=Number) => {
+      const el = card.querySelector(sel);
+      if(!el) return;
+      el.addEventListener('input', ()=>{ p[prop] = cast === Number ? (Number(el.value)||0) : el.value; });
+    };
+    wire('.powerup-name','name', String);
+    wire('.pu-hp-change','hpChange', Number); wire('.pu-hp-per-s','hpPerS', Number); wire('.pu-hp-time','hpTime', Number);
+    wire('.pu-speed-change','speedChange', Number); wire('.pu-temp-speed','tempSpeed', Number); wire('.pu-temp-time','tempTime', Number);
+    wire('.pu-damage-change','damageChange', Number); wire('.pu-damage-per-s','damagePerS', Number); wire('.pu-damage-time','damageTime', Number);
+    wire('.pu-spawn-min','spawnMin', Number); wire('.pu-spawn-max','spawnMax', Number); wire('.pu-size','pickupSize', Number); wire('.pu-decay','decay', Number);
+  }
+
+  addPowerupBtn?.addEventListener('click', ()=>{
+    const id = uid();
+    const p = { id, name: `Powerup ${powerups.length+1}`, type:'Generic', img:null, color:'#f4f4f4' };
+    powerups.push(p);
+    renderPowerupCard(p);
+  });
+
+  // expose drawPreview for debugging
   window.drawPreview = drawPreview;
 
 })();
