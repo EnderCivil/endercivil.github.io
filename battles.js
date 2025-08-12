@@ -206,7 +206,10 @@
 
         <div style="display:flex;gap:8px;margin-top:8px;align-items:center;">
           <div class="toggle ${b.weaponEnabled ? 'on' : ''}" data-toggle="${b.id}" style="cursor:pointer;">
-            <div class="knob"></div>
+<label class="switch">
+  <input type="checkbox">
+  <span class="slider round"></span>
+</label>
           </div>
           <div style="font-size:13px;color:#24343e;font-weight:700;">Weapon</div>
           <button class="weapon-btn" data-id="${b.id}">Weapons</button>
