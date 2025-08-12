@@ -1,149 +1,142 @@
-// Main menu interactions: news slider + bouncing balls interacting with menu elements + page transitions
+// main.js: news slider (fixed), full-screen bouncing balls that interact with menu elements, and page transitions
 
-/* ----- News Slider ----- */
-const newsItems = Array.from(document.querySelectorAll(".news-item")) || [];
-const track = document.getElementById("newsTrack");
-const prevBtn = document.getElementById("newsPrev");
-const nextBtn = document.getElementById("newsNext");
-let newsIndex = 0;
-const showNews = (i) => {
-  const w = track.clientWidth;
-  track.style.transform = `translateX(-${i * 100}%)`;
-};
-prevBtn?.addEventListener("click", () => {
-  newsIndex = (newsIndex - 1 + newsItems.length) % newsItems.length;
-  showNews(newsIndex);
-});
-nextBtn?.addEventListener("click", () => {
-  newsIndex = (newsIndex + 1) % newsItems.length;
-  showNews(newsIndex);
-});
-// auto advance
-setInterval(() => { newsIndex = (newsIndex + 1) % newsItems.length; showNews(newsIndex); }, 4200);
-window.addEventListener("resize", () => showNews(newsIndex));
+/* ---------- News Slider ---------- */
+(() => {
+  const track = document.getElementById('newsTrack');
+  const items = track ? Array.from(track.children) : [];
+  const prev = document.getElementById('newsPrev');
+  const next = document.getElementById('newsNext');
+  let index = 0;
 
-/* ----- Page transition on links ----- */
-document.querySelectorAll(".page-link").forEach(link => {
-  link.addEventListener("click", function(e) {
+  function updateTrack() {
+    if (!track) return;
+    track.style.width = `${items.length * 100}%`;
+    items.forEach(it => it.style.width = `${100 / items.length}%`);
+    track.style.transform = `translateX(-${index * (100 / items.length)}%)`;
+  }
+  window.addEventListener('load', updateTrack);
+  window.addEventListener('resize', updateTrack);
+
+  prev?.addEventListener('click', () => {
+    index = (index - 1 + items.length) % items.length;
+    updateTrack();
+  });
+  next?.addEventListener('click', () => {
+    index = (index + 1) % items.length;
+    updateTrack();
+  });
+
+  // auto-advance
+  setInterval(() => {
+    index = (index + 1) % items.length;
+    updateTrack();
+  }, 4200);
+})();
+
+/* ---------- Page link transitions ---------- */
+document.querySelectorAll('.page-link').forEach(link => {
+  link.addEventListener('click', function (e) {
     e.preventDefault();
-    const url = this.getAttribute("href");
+    const url = this.href;
+    document.body.style.transition = 'opacity .28s ease';
     document.body.style.opacity = 0;
-    setTimeout(() => window.location.href = url, 380);
+    setTimeout(() => location.href = url, 300);
   });
 });
 
-/* ----- Bouncing balls in right stage that interact with menu elements ----- */
-(function initBouncingBalls() {
-  const canvas = document.getElementById("menuCanvas");
+/* ---------- Full-screen bouncing balls (background) ---------- */
+(function bouncingBackground() {
+  const canvas = document.getElementById('bgBounce');
   if (!canvas) return;
-  const rect = canvas.getBoundingClientRect();
-  canvas.width = rect.width * devicePixelRatio;
-  canvas.height = rect.height * devicePixelRatio;
-  const ctx = canvas.getContext("2d");
-  ctx.scale(devicePixelRatio, devicePixelRatio);
+  const ctx = canvas.getContext('2d');
+  let DPR = devicePixelRatio || 1;
 
-  // elements to collide with (menu buttons + version badge)
-  const collisionTargets = [];
-  const menuBtns = document.querySelectorAll(".menu-btn");
-  menuBtns.forEach(el => collisionTargets.push(el));
-  const versionEl = document.getElementById("versionBadge");
-  if (versionEl) collisionTargets.push(versionEl);
-
-  // Ball data
-  const balls = [
-    { x: 60, y: 60, r: 16, vx: 180, vy: 140, color: '#ff7f50' },
-    { x: 160, y: 130, r: 20, vx: -150, vy: -110, color: '#6ce0ff' }
-  ];
-
-  // utility: get target rect in canvas coords
-  function targetRects() {
-    return collisionTargets.map(el => {
-      const r = el.getBoundingClientRect();
-      const stageRect = canvas.getBoundingClientRect();
-      return {
-        el,
-        left: r.left - stageRect.left,
-        top: r.top - stageRect.top,
-        right: r.right - stageRect.left,
-        bottom: r.bottom - stageRect.top,
-        width: r.width,
-        height: r.height
-      };
-    });
+  function resize() {
+    canvas.width = innerWidth * DPR;
+    canvas.height = innerHeight * DPR;
+    canvas.style.width = `${innerWidth}px`;
+    canvas.style.height = `${innerHeight}px`;
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   }
+  resize();
+  window.addEventListener('resize', resize);
+
+  // targets to bounce off (dynamic query on each frame)
+  function getTargets() {
+    const selectors = ['.menu-btn', '.menu-header', '.news-viewport', '.version-badge', '.menu-footer', '.right-stage'];
+    const els = [];
+    selectors.forEach(sel => document.querySelectorAll(sel).forEach(e => els.push(e)));
+    return els;
+  }
+
+  // initial balls
+  const balls = [
+    { x: 100, y: 140, r: 18, vx: 160, vy: 120, color: '#ff7f50' },
+    { x: 260, y: 240, r: 22, vx: -140, vy: -100, color: '#6ce0ff' }
+  ];
 
   let last = performance.now();
   function step(now) {
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
-    // clear
-    ctx.clearRect(0, 0, canvas.width / devicePixelRatio, canvas.height / devicePixelRatio);
+    ctx.clearRect(0, 0, innerWidth, innerHeight);
 
-    // update & draw balls
+    // update
     for (let i = 0; i < balls.length; i++) {
       const b = balls[i];
       b.x += b.vx * dt;
       b.y += b.vy * dt;
 
-      // stage bounds
-      const W = canvas.clientWidth, H = canvas.clientHeight;
+      // edges (entire viewport)
       if (b.x - b.r < 0) { b.x = b.r; b.vx *= -1; }
       if (b.y - b.r < 0) { b.y = b.r; b.vy *= -1; }
-      if (b.x + b.r > W) { b.x = W - b.r; b.vx *= -1; }
-      if (b.y + b.r > H) { b.y = H - b.r; b.vy *= -1; }
+      if (b.x + b.r > innerWidth) { b.x = innerWidth - b.r; b.vx *= -1; }
+      if (b.y + b.r > innerHeight) { b.y = innerHeight - b.r; b.vy *= -1; }
 
-      // ball-ball collision simple
+      // ball-ball collisions
       for (let j = i + 1; j < balls.length; j++) {
         const o = balls[j];
         const dx = o.x - b.x, dy = o.y - b.y;
         const dist = Math.hypot(dx, dy);
         const minD = b.r + o.r;
         if (dist < minD && dist > 0) {
-          // basic elastic collision
           const nx = dx / dist, ny = dy / dist;
           const p = 2 * (b.vx * nx + b.vy * ny - o.vx * nx - o.vy * ny) / 2;
-          b.vx = b.vx - p * nx;
-          b.vy = b.vy - p * ny;
-          o.vx = o.vx + p * nx;
-          o.vy = o.vy + p * ny;
-          // separate overlap
+          b.vx -= p * nx; b.vy -= p * ny;
+          o.vx += p * nx; o.vy += p * ny;
           const overlap = (minD - dist) / 2;
           b.x -= nx * overlap; b.y -= ny * overlap;
           o.x += nx * overlap; o.y += ny * overlap;
         }
       }
 
-      // collisions with menu elements (rect bounce)
-      const rects = targetRects();
-      rects.forEach(tr => {
-        // closest point on rect to circle center
-        const cx = Math.max(tr.left, Math.min(b.x, tr.right));
-        const cy = Math.max(tr.top, Math.min(b.y, tr.bottom));
+      // collide with UI rects
+      const rects = getTargets().map(el => el.getBoundingClientRect());
+      rects.forEach(r => {
+        const cx = Math.max(r.left, Math.min(b.x, r.right));
+        const cy = Math.max(r.top, Math.min(b.y, r.bottom));
         const dx = b.x - cx, dy = b.y - cy;
-        const d2 = dx*dx + dy*dy;
-        if (d2 < b.r*b.r) {
-          // reflect velocity based on collision normal
+        const d2 = dx * dx + dy * dy;
+        if (d2 < b.r * b.r) {
           const d = Math.sqrt(Math.max(1e-6, d2));
           const nx = dx / d, ny = dy / d;
-          const dot = b.vx*nx + b.vy*ny;
+          const dot = b.vx * nx + b.vy * ny;
           b.vx -= 2 * dot * nx;
           b.vy -= 2 * dot * ny;
-          // push out
           const push = (b.r - d) + 1;
-          b.x += nx * push;
-          b.y += ny * push;
+          b.x += nx * push; b.y += ny * push;
         }
       });
+    }
 
-      // draw
+    // draw
+    for (const b of balls) {
       ctx.beginPath();
       ctx.fillStyle = b.color;
-      ctx.arc(b.x, b.y, b.r, 0, Math.PI*2);
+      ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
       ctx.fill();
-
-      // highlight bounce ring
       ctx.lineWidth = 2;
-      ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+      ctx.strokeStyle = 'rgba(255,255,255,0.09)';
       ctx.stroke();
     }
 
@@ -151,13 +144,4 @@ document.querySelectorAll(".page-link").forEach(link => {
   }
 
   requestAnimationFrame(step);
-
-  // resize handling
-  const resizeObserver = new ResizeObserver(() => {
-    const r = canvas.getBoundingClientRect();
-    canvas.width = r.width * devicePixelRatio;
-    canvas.height = r.height * devicePixelRatio;
-    ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
-  });
-  resizeObserver.observe(canvas);
 })();
