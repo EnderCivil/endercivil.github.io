@@ -8,7 +8,7 @@
 </head>
 <body class="battle-page">
 
-  <!-- Persistent audio (same URL) so direct-open also has audio -->
+  <!-- persistent audio if opened directly -->
   <audio id="bgAudio" src="https://vgmsite.com/soundtracks/armored-core-nexus/zahvmqai/1-02.%20World%20Navigation.mp3" loop preload="auto" autoplay></audio>
 
   <div id="app">
@@ -39,18 +39,21 @@
               <button id="selZone" class="menu-btn small">Zone</button>
             </div>
           </div>
-          <div class="editor-actions">
-            <button id="addBallBtn" class="add-btn">+ Add Ball</button>
-          </div>
         </div>
 
         <div id="ballPanel" class="ball-panel">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <h4>Balls</h4>
+            <!-- Add ball button placed inside Balls panel with consistent CSS -->
+            <button id="addBallBtn" class="add-btn">+ Add Ball</button>
+          </div>
           <div id="ballList" class="ball-list"></div>
         </div>
 
         <div id="zonePanel" class="ball-panel hidden">
           <h4>Zone Settings</h4>
           <div class="field-inline"><label>Start Size (%)</label><input id="zoneStart" type="number" min="10" max="200" value="100" /></div>
+          <div class="field-inline"><label>Spawn Delay (s)</label><input id="zoneSpawnDelay" type="number" min="0" value="1" /></div>
           <div class="field-inline"><label>Delay before close (s)</label><input id="zoneDelay" type="number" min="0" value="8" /></div>
           <div class="field-inline"><label>Close Duration (s)</label><input id="zoneDuration" type="number" min="1" value="30" /></div>
           <div class="field-inline"><label>Zone DPS</label><input id="zoneDPS" type="number" min="0" value="4" /></div>
@@ -61,6 +64,7 @@
 
     <div class="bottom-bar">
       <button id="startGameBtn" class="start-btn">Start Game</button>
+      <button id="endGameBtn" class="start-btn" style="margin-left:8px;background:linear-gradient(90deg,#ff9a9a,#ff6b6b);">End Game</button>
     </div>
 
     <!-- Icon/Color picker modal -->
