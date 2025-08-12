@@ -8,13 +8,13 @@
 </head>
 <body class="menu-page">
 
-  <!-- Persistent audio - outside of #app so SPA swaps won't replace it -->
-  <audio id="bgAudio" src="music.mp3" loop preload="auto"></audio>
+  <!-- Persistent audio kept outside #app so SPA loads won't replace it.
+       Uses the provided track URL and loops. -->
+  <audio id="bgAudio" src="https://vgmsite.com/soundtracks/armored-core-nexus/zahvmqai/1-02.%20World%20Navigation.mp3" loop preload="auto" autoplay></audio>
 
   <!-- full-screen bouncing canvas behind UI -->
   <canvas id="bgBounce" class="bg-bounce"></canvas>
 
-  <!-- app container (used by SPA loader) -->
   <div id="app">
     <div class="menu-wrap">
       <div class="menu-left">
@@ -42,16 +42,24 @@
         </footer>
       </div>
 
-    <!-- Patch notes modal -->
-    <div id="newsModal" class="modal hidden" aria-hidden="true">
-      <div class="modal-content">
-        <h3>Patch Notes — Latest</h3>
-        <div class="modal-body">
-          <p><strong>v0.3 : </strong>THE BATTLES UPDATE - Battles has had a huge overhaul, with brand new features like: <br>- Storm<br>- Melee Weapons<br> and more! Check out our full patch notes in the discord found on the main menu.</p>
+      <div class="menu-right">
+        <div class="right-stage" id="rightStage">
+          <div class="version-badge" id="versionBadge">v0.2</div>
         </div>
-        <div class="modal-actions">
-          <button id="newsClose" class="menu-btn small">Close</button>
-        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Patch notes modal -->
+  <div id="newsModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-content">
+      <h3>Patch Notes — Latest</h3>
+      <div class="modal-body">
+        <p><strong>v0.2</strong> — Ball editor improvements, UI fixes, Battles simulation added (weapons, zone, speed, warnings).</p>
+        <p><strong>v0.1</strong> — Main menu, bouncing demo, ball editor prototype.</p>
+      </div>
+      <div class="modal-actions">
+        <button id="newsClose" class="menu-btn small">Close</button>
       </div>
     </div>
   </div>
