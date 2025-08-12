@@ -21,10 +21,10 @@ a{color:inherit;text-decoration:none}
 .menu-page { min-height:100vh; position:relative; overflow:hidden; }
 
 /* full-screen bounce canvas behind UI */
-.bg-bounce { position:fixed; left:0; top:0; width:100vw; height:100vh; z-index:0; display:block; pointer-events:none; }
+.bg-bounce { position:fixed; left:0; top:0; width:1500vw; height:100vh; z-index:0; display:block; pointer-events:none; }
 
 /* layout */
-.menu-wrap { position:relative; z-index:2; display:flex; gap:24px; align-items:flex-start; padding:24px; max-width:100px; margin:0 auto; width:calc(100% - 48px); }
+.menu-wrap { position:relative; z-index:2; display:flex; gap:24px; align-items:flex-start; padding:24px; max-width:1500px; margin:0 auto; width:calc(100% - 48px); }
 .menu-left { flex:0 0 520px; display:flex; flex-direction:column; gap:12px; align-items:flex-start; }
 .menu-right { flex:1; display:flex; align-items:center; justify-content:center; }
 
