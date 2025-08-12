@@ -8,9 +8,8 @@
 </head>
 <body class="battle-page">
 
-  <!-- Keep audio & audio toggle outside of #app when served directly -->
-  <audio id="bgAudio" src="music.mp3" loop preload="auto"></audio>
-  <button id="audioToggle" class="audio-toggle" aria-pressed="false">▶ Music</button>
+  <!-- Persistent audio (same URL) so direct-open also has audio -->
+  <audio id="bgAudio" src="https://vgmsite.com/soundtracks/armored-core-nexus/zahvmqai/1-02.%20World%20Navigation.mp3" loop preload="auto" autoplay></audio>
 
   <div id="app">
     <div class="page-topbar">
@@ -33,7 +32,13 @@
 
       <main class="editor-area">
         <div class="editor-header">
-          <h3>Ball Configuration</h3>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <h3>Configuration</h3>
+            <div class="menu-selector">
+              <button id="selBalls" class="menu-btn small sel-active">Balls</button>
+              <button id="selZone" class="menu-btn small">Zone</button>
+            </div>
+          </div>
           <div class="editor-actions">
             <button id="addBallBtn" class="add-btn">+ Add Ball</button>
           </div>
@@ -41,6 +46,15 @@
 
         <div id="ballPanel" class="ball-panel">
           <div id="ballList" class="ball-list"></div>
+        </div>
+
+        <div id="zonePanel" class="ball-panel hidden">
+          <h4>Zone Settings</h4>
+          <div class="field-inline"><label>Start Size (%)</label><input id="zoneStart" type="number" min="10" max="200" value="100" /></div>
+          <div class="field-inline"><label>Delay before close (s)</label><input id="zoneDelay" type="number" min="0" value="8" /></div>
+          <div class="field-inline"><label>Close Duration (s)</label><input id="zoneDuration" type="number" min="1" value="30" /></div>
+          <div class="field-inline"><label>Zone DPS</label><input id="zoneDPS" type="number" min="0" value="4" /></div>
+          <div class="field-inline"><label>Damage Delay (s)</label><input id="zoneDamageDelay" type="number" min="0" value="0.5" /></div>
         </div>
       </main>
     </div>
@@ -64,27 +78,24 @@
       </div>
     </div>
 
-    <!-- Weapon customizer modal -->
+    <!-- Weapon customiser -->
     <div id="weaponModal" class="modal hidden" aria-hidden="true">
       <div class="modal-content weapon-modal-content">
         <div class="weapon-left">
           <h3>Weapon Customiser</h3>
-
           <div class="modal-body">
-            <label>Asset: <input id="weaponFile" type="file" accept="image/*" /></label>
+            <label>Asset (default 34.png): <input id="weaponFile" type="file" accept="image/*" /></label>
             <div class="field-inline"><label>Damage</label><input id="weaponDamage" type="number" value="10" /></div>
-            <div class="field-inline"><label>Rotation Speed</label><input id="weaponRot" type="number" value="180" /></div>
-            <div class="field-inline"><label>Parry Chance (%)</label><input id="weaponParry" type="number" value="20" min="0" max="100" /></div>
+            <div class="field-inline"><label>Rotation Speed (deg/s)</label><input id="weaponRot" type="number" value="180" /></div>
+            <div class="field-inline"><label>Parry Chance (%)</label><input id="weaponParry" type="number" min="0" max="100" value="20" /></div>
             <div class="field-inline"><label>Width</label><input id="weaponWidth" type="number" value="10" /></div>
             <div class="field-inline"><label>Length</label><input id="weaponLength" type="number" value="48" /></div>
           </div>
-
           <div class="modal-actions">
             <button id="weaponApply" class="add-btn">Apply</button>
             <button id="weaponCancel" class="small">Cancel</button>
           </div>
         </div>
-
         <div class="weapon-right">
           <h4>Preview</h4>
           <div id="weaponPreview" class="weapon-preview">
@@ -97,7 +108,7 @@
     <!-- Loading / countdown overlay -->
     <div id="gameOverlay" class="overlay hidden">
       <div class="overlay-inner" id="overlayInner">
-        <div id="loadingText" style="font-size:20px;">Initializing...</div>
+        <div id="loadingText">Initializing...</div>
         <div id="countdown" class="countdown hidden"></div>
       </div>
     </div>
@@ -113,6 +124,7 @@
         </div>
       </div>
     </div>
+
   </div>
 
   <script src="main.js"></script>
