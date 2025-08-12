@@ -6,33 +6,42 @@
   <title>BrawlSpheres - Battles</title>
   <link rel="stylesheet" href="style.css" />
 </head>
-<body class="page-fade-in">
+<body class="battle-page">
 
   <div class="page-topbar">
-    <button class="back-btn" id="backBtn">← Main Menu</button>
+    <button class="menu-btn small" id="backBtn">← Main Menu</button>
     <div class="page-title">Battles</div>
+    <div class="top-spacer"></div>
   </div>
 
-  <div class="battle-container">
-    <aside class="preview-area">
-      <h2>Spawn Preview</h2>
-      <div class="canvas-wrap">
+  <div class="battle-container wide">
+    <aside class="preview-area" id="previewColumn">
+      <div class="preview-header">
+        <h2>Spawn Preview</h2>
+        <button id="previewToggle" class="small-toggle">Preview ▸</button>
+      </div>
+      <div class="canvas-wrap" id="previewWrap">
         <canvas id="spawnCanvas"></canvas>
       </div>
-      <p class="preview-hint">Drag balls inside the preview to set spawn points.</p>
+      <p class="preview-hint">Drag balls inside the preview to set spawn points. Tap preview toggle on mobile to expand.</p>
     </aside>
 
-    <main class="editor-area" id="editorArea">
-      <!-- Ball cards injected here -->
-      <div id="ballList"></div>
-      <div class="editor-actions">
-        <button id="addBallBtn" class="add-btn">+ Add Ball</button>
+    <main class="editor-area">
+      <div class="editor-header">
+        <h3>Ball Configuration</h3>
+        <div class="editor-actions">
+          <button id="addBallBtn" class="add-btn">+ Add Ball</button>
+        </div>
+      </div>
+
+      <div id="ballPanel" class="ball-panel">
+        <div id="ballList" class="ball-list"></div>
       </div>
     </main>
   </div>
 
   <div class="bottom-bar">
-    <button class="start-btn" id="startGameBtn">Start Game</button>
+    <button id="startGameBtn" class="start-btn">Start Game</button>
   </div>
 
   <!-- Icon/Color picker modal -->
@@ -40,12 +49,32 @@
     <div class="modal-content">
       <h3>Choose ball appearance</h3>
       <div class="modal-body">
-        <label class="modal-row">Pick color: <input id="modalColor" type="color" value="#ff7f50" /></label>
-        <label class="modal-row">Or upload image: <input id="modalFile" type="file" accept="image/*" /></label>
+        <label>Pick color: <input id="modalColor" type="color" value="#ff7f50" /></label>
+        <label>Upload image: <input id="modalFile" type="file" accept="image/*" /></label>
       </div>
       <div class="modal-actions">
-        <button id="modalApply">Apply</button>
-        <button id="modalCancel">Cancel</button>
+        <button id="modalApply" class="add-btn">Apply</button>
+        <button id="modalCancel" class="small">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading / countdown overlay -->
+  <div id="gameOverlay" class="overlay hidden">
+    <div class="overlay-inner" id="overlayInner">
+      <div id="loadingText">Initializing...</div>
+      <div id="countdown" class="countdown hidden"></div>
+    </div>
+  </div>
+
+  <!-- Winner popup -->
+  <div id="winnerPopup" class="modal hidden" aria-hidden="true">
+    <div class="modal-content">
+      <div id="winnerIcon" style="width:96px; height:96px; margin: 0 auto 12px;"></div>
+      <h2 id="winnerText" style="text-align:center; margin:0 0 12px;">Ball X WON!</h2>
+      <div style="display:flex; gap:8px; justify-content:center;">
+        <button id="exitEditor" class="add-btn">Exit to Editor</button>
+        <button id="exitMenu" class="small">Exit to Main Menu</button>
       </div>
     </div>
   </div>
