@@ -1,31 +1,51 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>BrawlSpheres - Main Menu</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
-<body class="menu-bg fade-in">
+<body class="menu-bg page-fade-in">
 
-  <div class="menu-container">
-    <h1 class="game-title">BrawlSpheres</h1>
-    <p class="game-desc">Customisable ball battles in chaotic arenas. Create, fight, and smash your way to victory.</p>
+  <div class="menu-wrap">
+    <div class="menu-left">
+      <header class="menu-header">
+        <h1 class="game-title">BrawlSpheres</h1>
+        <p class="game-desc">Customisable ball battles in chaotic arenas. Create, fight, and smash your way to victory.</p>
+      </header>
 
-    <div class="menu-buttons">
-      <a href="battles.html" class="menu-btn page-link">Battles</a>
-      <button class="menu-btn page-link">Races</button>
-      <button class="menu-btn page-link">Breakouts</button>
+      <nav class="menu-buttons">
+        <a href="battles.html" class="menu-btn page-link">Battles</a>
+        <a href="#" class="menu-btn">Races</a>
+        <a href="#" class="menu-btn">Breakouts</a>
+      </nav>
+
+      <section class="news-slider" aria-label="Latest News">
+        <div class="news-track" id="newsTrack">
+          <div class="news-item">Ball editor is now live!</div>
+          <div class="news-item">Damage attribute added — weapons coming soon.</div>
+          <div class="news-item">New arenas and modes planned.</div>
+        </div>
+        <div class="news-controls">
+          <button id="newsPrev" aria-label="Previous news">◀</button>
+          <button id="newsNext" aria-label="Next news">▶</button>
+        </div>
+      </section>
+
+      <footer class="menu-footer">
+        <span class="username">EnderCivil</span>
+      </footer>
     </div>
 
-    <div class="side-info">
-      <h3>Latest News</h3>
-      <p>- Ball editor is now live!<br>- Weapon customization coming soon.<br>- New arenas in development.</p>
+    <div class="menu-right">
+      <div class="right-stage" id="rightStage">
+        <!-- Canvas for bouncing balls -->
+        <canvas id="menuCanvas"></canvas>
+        <!-- Overlaid version number in bottom-right of the stage -->
+        <div class="version-badge" id="versionBadge">v0.1</div>
+      </div>
     </div>
-
-    <footer class="menu-footer">
-      <span>Created by Kai • v0.1</span>
-    </footer>
   </div>
 
   <script src="main.js"></script>
