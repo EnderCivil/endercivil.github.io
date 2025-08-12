@@ -34,23 +34,25 @@
         <div class="editor-header">
           <div style="display:flex;align-items:center;gap:12px;">
             <h3>Configuration</h3>
-            <div class="menu-selector">
+            <div class="menu-selector" style="display:flex; gap:8px;">
               <button id="selBalls" class="menu-btn small sel-active">Balls</button>
               <button id="selZone" class="menu-btn small">Zone</button>
+              <button id="selPowerups" class="menu-btn small">Powerups</button>
             </div>
           </div>
         </div>
 
-        <div id="ballPanel" class="ball-panel">
+        <!-- Balls panel -->
+        <div id="ballPanel" class="ball-panel" aria-hidden="false">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
             <h4>Balls</h4>
-            <!-- Add ball button placed inside Balls panel with consistent CSS -->
             <button id="addBallBtn" class="add-btn">+ Add Ball</button>
           </div>
           <div id="ballList" class="ball-list"></div>
         </div>
 
-        <div id="zonePanel" class="ball-panel hidden">
+        <!-- Zone panel -->
+        <div id="zonePanel" class="ball-panel hidden" aria-hidden="true">
           <h4>Zone Settings</h4>
           <div class="field-inline"><label>Start Size (%)</label><input id="zoneStart" type="number" min="10" max="200" value="100" /></div>
           <div class="field-inline"><label>Spawn Delay (s)</label><input id="zoneSpawnDelay" type="number" min="0" value="1" /></div>
@@ -59,12 +61,23 @@
           <div class="field-inline"><label>Zone DPS</label><input id="zoneDPS" type="number" min="0" value="4" /></div>
           <div class="field-inline"><label>Damage Delay (s)</label><input id="zoneDamageDelay" type="number" min="0" value="0.5" /></div>
         </div>
+
+        <!-- Powerups panel -->
+        <div id="powerupsPanel" class="ball-panel hidden" aria-hidden="true">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <h4>Powerups</h4>
+            <button id="addPowerupBtn" class="add-btn">+ Add Powerup</button>
+          </div>
+          <div id="powerupList" class="ball-list"></div>
+        </div>
+
       </main>
     </div>
 
     <div class="bottom-bar">
       <button id="startGameBtn" class="start-btn">Start Game</button>
-      <button id="endGameBtn" class="start-btn" style="margin-left:8px;background:linear-gradient(90deg,#ff9a9a,#ff6b6b);">End Game</button>
+      <!-- end button disabled by default until a match is running -->
+      <button id="endGameBtn" class="start-btn" disabled style="margin-left:8px;background:linear-gradient(90deg,#ff9a9a,#ff6b6b);">End Game</button>
     </div>
 
     <!-- Icon/Color picker modal -->
