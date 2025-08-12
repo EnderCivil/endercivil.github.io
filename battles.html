@@ -1,26 +1,53 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>BrawlSpheres - Battles</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
-<body>
-  <div class="battle-container">
-    <div class="preview-area">
-      <h2>Spawn Preview</h2>
-      <canvas id="spawnCanvas"></canvas>
-    </div>
+<body class="page-fade-in">
 
-    <div class="editor-area" id="editorArea">
-      <!-- Ball cards will be injected here -->
-      <button id="addBallBtn" class="add-btn">+ Add Ball</button>
-    </div>
+  <div class="page-topbar">
+    <button class="back-btn" id="backBtn">← Main Menu</button>
+    <div class="page-title">Battles</div>
+  </div>
+
+  <div class="battle-container">
+    <aside class="preview-area">
+      <h2>Spawn Preview</h2>
+      <div class="canvas-wrap">
+        <canvas id="spawnCanvas"></canvas>
+      </div>
+      <p class="preview-hint">Drag balls inside the preview to set spawn points.</p>
+    </aside>
+
+    <main class="editor-area" id="editorArea">
+      <!-- Ball cards injected here -->
+      <div id="ballList"></div>
+      <div class="editor-actions">
+        <button id="addBallBtn" class="add-btn">+ Add Ball</button>
+      </div>
+    </main>
   </div>
 
   <div class="bottom-bar">
     <button class="start-btn" id="startGameBtn">Start Game</button>
+  </div>
+
+  <!-- Icon/Color picker modal -->
+  <div id="iconModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-content">
+      <h3>Choose ball appearance</h3>
+      <div class="modal-body">
+        <label class="modal-row">Pick color: <input id="modalColor" type="color" value="#ff7f50" /></label>
+        <label class="modal-row">Or upload image: <input id="modalFile" type="file" accept="image/*" /></label>
+      </div>
+      <div class="modal-actions">
+        <button id="modalApply">Apply</button>
+        <button id="modalCancel">Cancel</button>
+      </div>
+    </div>
   </div>
 
   <script src="battles.js"></script>
