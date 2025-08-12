@@ -1,39 +1,22 @@
-// main.js: news slider (fixed), full-screen bouncing balls that interact with menu elements, and page transitions
+// main.js — simplified: patch-notes modal, discord button already in HTML, full-screen bouncing balls
 
-/* ---------- News Slider ---------- */
+// Patch notes modal
 (() => {
-  const track = document.getElementById('newsTrack');
-  const items = track ? Array.from(track.children) : [];
-  const prev = document.getElementById('newsPrev');
-  const next = document.getElementById('newsNext');
-  let index = 0;
+  const newsBtn = document.getElementById('newsBtn');
+  const newsModal = document.getElementById('newsModal');
+  const newsClose = document.getElementById('newsClose');
 
-  function updateTrack() {
-    if (!track) return;
-    track.style.width = `${items.length * 100}%`;
-    items.forEach(it => it.style.width = `${100 / items.length}%`);
-    track.style.transform = `translateX(-${index * (100 / items.length)}%)`;
-  }
-  window.addEventListener('load', updateTrack);
-  window.addEventListener('resize', updateTrack);
-
-  prev?.addEventListener('click', () => {
-    index = (index - 1 + items.length) % items.length;
-    updateTrack();
+  newsBtn?.addEventListener('click', () => {
+    newsModal.classList.remove('hidden');
+    newsModal.setAttribute('aria-hidden', 'false');
   });
-  next?.addEventListener('click', () => {
-    index = (index + 1) % items.length;
-    updateTrack();
+  newsClose?.addEventListener('click', () => {
+    newsModal.classList.add('hidden');
+    newsModal.setAttribute('aria-hidden', 'true');
   });
-
-  // auto-advance
-  setInterval(() => {
-    index = (index + 1) % items.length;
-    updateTrack();
-  }, 4200);
 })();
 
-/* ---------- Page link transitions ---------- */
+// Page link transitions
 document.querySelectorAll('.page-link').forEach(link => {
   link.addEventListener('click', function (e) {
     e.preventDefault();
@@ -44,7 +27,7 @@ document.querySelectorAll('.page-link').forEach(link => {
   });
 });
 
-/* ---------- Full-screen bouncing balls (background) ---------- */
+// Bouncing background: full viewport canvas; balls bounce off visible UI rects
 (function bouncingBackground() {
   const canvas = document.getElementById('bgBounce');
   if (!canvas) return;
@@ -61,18 +44,17 @@ document.querySelectorAll('.page-link').forEach(link => {
   resize();
   window.addEventListener('resize', resize);
 
-  // targets to bounce off (dynamic query on each frame)
   function getTargets() {
-    const selectors = ['.menu-btn', '.menu-header', '.news-viewport', '.version-badge', '.menu-footer', '.right-stage'];
+    const selectors = ['.menu-btn', '.menu-header', '.version-badge', '.menu-footer', '.discord-btn'];
     const els = [];
     selectors.forEach(sel => document.querySelectorAll(sel).forEach(e => els.push(e)));
     return els;
   }
 
-  // initial balls
+  // a few balls (2)
   const balls = [
-    { x: 100, y: 140, r: 18, vx: 160, vy: 120, color: '#ff7f50' },
-    { x: 260, y: 240, r: 22, vx: -140, vy: -100, color: '#6ce0ff' }
+    { x: 100, y: 160, r: 20, vx: 160, vy: 120, color: '#ff7f50' },
+    { x: 260, y: 260, r: 22, vx: -140, vy: -100, color: '#6ce0ff' }
   ];
 
   let last = performance.now();
@@ -81,19 +63,18 @@ document.querySelectorAll('.page-link').forEach(link => {
     last = now;
     ctx.clearRect(0, 0, innerWidth, innerHeight);
 
-    // update
+    // update & collisions
     for (let i = 0; i < balls.length; i++) {
       const b = balls[i];
       b.x += b.vx * dt;
       b.y += b.vy * dt;
 
-      // edges (entire viewport)
       if (b.x - b.r < 0) { b.x = b.r; b.vx *= -1; }
       if (b.y - b.r < 0) { b.y = b.r; b.vy *= -1; }
       if (b.x + b.r > innerWidth) { b.x = innerWidth - b.r; b.vx *= -1; }
       if (b.y + b.r > innerHeight) { b.y = innerHeight - b.r; b.vy *= -1; }
 
-      // ball-ball collisions
+      // ball-ball
       for (let j = i + 1; j < balls.length; j++) {
         const o = balls[j];
         const dx = o.x - b.x, dy = o.y - b.y;
@@ -110,7 +91,7 @@ document.querySelectorAll('.page-link').forEach(link => {
         }
       }
 
-      // collide with UI rects
+      // UI rect collisions
       const rects = getTargets().map(el => el.getBoundingClientRect());
       rects.forEach(r => {
         const cx = Math.max(r.left, Math.min(b.x, r.right));
@@ -136,12 +117,11 @@ document.querySelectorAll('.page-link').forEach(link => {
       ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
       ctx.fill();
       ctx.lineWidth = 2;
-      ctx.strokeStyle = 'rgba(255,255,255,0.09)';
+      ctx.strokeStyle = 'rgba(255,255,255,0.08)';
       ctx.stroke();
     }
 
     requestAnimationFrame(step);
   }
-
   requestAnimationFrame(step);
 })();
