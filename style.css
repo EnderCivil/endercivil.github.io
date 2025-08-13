@@ -162,4 +162,36 @@ a{color:inherit;text-decoration:none}
 /* small utility */
 .small { padding:8px 10px; border-radius:8px; background:transparent; border:1px solid #e6eef6; cursor:pointer; font-size:14px; }
 
+/* ====== Add / merge into style.css ====== */
 
+/* Zone toggle */
+.zone-toggle { display:flex; align-items:center; gap:10px; margin:8px 0; }
+.zone-toggle label { font-weight:700; color:#10202b; }
+
+/* Powerups panel styling - reuse ball card styling */
+.powerup-card { background:#fff; border:1px solid #e5eef8; border-radius:10px; padding:12px; display:flex; gap:12px; align-items:flex-start; position:relative; }
+.powerup-card .delete-btn { position:absolute; right:8px; top:8px; border:0; background:transparent; cursor:pointer; font-weight:700; color:#b33; }
+.powerup-thumbnail { width:64px; height:64px; border-radius:12px; border:3px solid #d7e7f6; display:flex; align-items:center; justify-content:center; background:linear-gradient(180deg,#fff,#f6fbff); cursor:pointer; }
+.powerup-thumb-img { width:52px; height:52px; border-radius:8px; object-fit:cover; display:block; }
+
+/* collapsible sections used for powerup/ranged config */
+.collapsible { border:1px solid #ecf4fb; border-radius:8px; padding:8px; background:linear-gradient(180deg,#fff,#fbfdff); margin:8px 0; }
+.collapsible > summary { list-style:none; font-weight:700; cursor:pointer; padding:6px 8px; }
+.collapsible[open] { box-shadow:0 8px 20px rgba(40,60,80,0.04); }
+
+/* physics panel styling (small) */
+.physics-panel { background:linear-gradient(180deg,#fff,#fbfdff); padding:12px; border-radius:12px; box-shadow:var(--shadow); margin-top:8px; }
+.physics-row { display:flex; align-items:center; gap:12px; margin:8px 0; }
+
+/* weapon type tabs inside weapon modal */
+.weapon-type-row { display:flex; gap:8px; align-items:center; margin:8px 0; }
+.weapon-type-row button { padding:8px 10px; border-radius:8px; border:1px solid rgba(10,20,30,0.04); background:transparent; cursor:pointer; }
+
+/* projectile rendering helper (canvas only) - kept simple here */
+.projectile { position:absolute; width:8px; height:8px; border-radius:50%; background:#ffce4a; }
+
+/* small utility */
+.disabled { opacity:0.45; pointer-events:none; filter:grayscale(0.15); }
+
+/* ensure powerup list uses same scroll style */
+#powerupList { overflow:auto; max-height:calc(100vh - 260px); padding-right:8px; display:flex; flex-direction:column; gap:14px; padding-bottom:8px; }
