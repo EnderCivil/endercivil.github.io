@@ -71,8 +71,8 @@
     const r = spawnCanvas.getBoundingClientRect();
     spawnCanvas.width = Math.max(320, Math.round(r.width)) * DPR;
     spawnCanvas.height = Math.max(240, Math.round(r.height)) * DPR;
-    spawnCanvas.style.width = ${r.width}px;
-    spawnCanvas.style.height = ${r.height}px;
+    spawnCanvas.style.width = `${r.width}px`;
+    spawnCanvas.style.height = `${r.height}px`;
     ctx = spawnCanvas.getContext('2d');
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   }
@@ -109,7 +109,7 @@
 
   const defaultWeaponPreset = 'https://raw.githubusercontent.com/EnderCivil/endercivil.github.io/main/34.png';
 
-  function randColor(){ const h = Math.floor(Math.random()*360); const s = 60 + Math.floor(Math.random()*25); return hsl(${h} ${s}% 55%); }
+  function randColor(){ const h = Math.floor(Math.random()*360); const s = 60 + Math.floor(Math.random()*25); return `hsl(${h} ${s}% 55%)`; }
 
   function randomSpawn(r){
     const pw = spawnCanvas.clientWidth, ph = spawnCanvas.clientHeight;
@@ -127,7 +127,7 @@
   function createBall(){
     if(balls.length >= MAX_BALLS) return;
     const id = uid();
-    const name = Ball ${getNextBallNumber()};
+    const name = `Ball ${getNextBallNumber()}`;
     const r = 20;
     const pos = (spawnCanvas && spawnCanvas.clientWidth) ? randomSpawn(r) : { x: 40 + balls.length*60, y: 80 + balls.length*40 };
     const b = {
@@ -159,14 +159,14 @@
   // render ball card with weapon toggle
   function renderBallCard(b){
     // preserve existing card if it exists
-    let card = document.querySelector(.ball-card[data-id="${b.id}"]);
+    let card = document.querySelector(`.ball-card[data-id="${b.id}"]`);
     if(card) return; // already rendered (prevents duplicates)
 
     card = document.createElement('div');
     card.className = 'ball-card';
     card.dataset.id = b.id;
     // use details / simple structure; UI styling handled by CSS you already have
-    card.innerHTML = 
+    card.innerHTML = `
       <button class="delete-btn" title="Delete">✕</button>
       <div class="icon-picker" data-id="${b.id}" title="Click to set color or upload image">
         <div class="icon-preview" style="background:${b.color}; width:48px;height:48px;border-radius:8px; display:inline-block;"></div>
@@ -206,10 +206,7 @@
 
         <div style="display:flex;gap:8px;margin-top:8px;align-items:center;">
           <div class="toggle ${b.weaponEnabled ? 'on' : ''}" data-toggle="${b.id}" style="cursor:pointer;">
-<label class="switch">
-  <input type="checkbox">
-  <span class="slider round"></span>
-</label>
+            <div class="knob"></div>
           </div>
           <div style="font-size:13px;color:#24343e;font-weight:700;">Weapon</div>
           <button class="weapon-btn" data-id="${b.id}">Weapons</button>
@@ -218,7 +215,7 @@
 
         <div style="margin-top:8px;"><small class="defeated-label" data-def="${b.id}" style="color:#b33;display:none">DEFEATED</small></div>
       </div>
-    ;
+    `;
     // attach
     ballListEl.appendChild(card);
 
@@ -257,9 +254,9 @@
           if(p === 'maxHP'){ if(b.hpType==='segmented'){ b.segments = Math.max(1, Math.min(10, Math.floor(Number(b.maxHP)))); b.hpCur = b.segments; } else b.hpCur = Number(b.maxHP); }
         }
         // warnings UI
-        const warnSpan = document.querySelector(.attr-warn[data-warn="${b.id}"]);
+        const warnSpan = document.querySelector(`.attr-warn[data-warn="${b.id}"]`);
         const warns = computeWarnings(b);
-        warnSpan.innerText = warns.length ? Excessive ${warns.join(', ')} can cause FPS issues : '';
+        warnSpan.innerText = warns.length ? `Excessive ${warns.join(', ')} can cause FPS issues` : '';
         warnSpan.style.color = warns.length ? 'var(--warn)' : '';
         drawPreview();
       });
@@ -272,8 +269,8 @@
     card.querySelector('.icon-picker').addEventListener('click', ()=>{ selectedIconTarget = b.id; iconModal.classList.remove('hidden'); modalFile.value=''; modalColor.value = colorToHex(b.color) || '#ff7f50'; });
 
     // weapon toggle + enable/disable weapon button
-    const toggle = card.querySelector(.toggle[data-toggle="${b.id}"]);
-    const weaponBtn = card.querySelector(.weapon-btn[data-id="${b.id}"]);
+    const toggle = card.querySelector(`.toggle[data-toggle="${b.id}"]`);
+    const weaponBtn = card.querySelector(`.weapon-btn[data-id="${b.id}"]`);
     function setWeaponState(enabled){
       b.weaponEnabled = !!enabled;
       if(enabled){ toggle.classList.add('on'); weaponBtn.disabled = false; }
@@ -324,9 +321,9 @@
   function closeIconModal(){ iconModal.classList.add('hidden'); selectedIconTarget=null; modalFile.value=''; }
 
   function updateIconPreview(b){
-    const el = document.querySelector(.icon-picker[data-id="${b.id}"] .icon-preview);
+    const el = document.querySelector(`.icon-picker[data-id="${b.id}"] .icon-preview`);
     if(!el) return;
-    if(b.img){ el.style.backgroundImage = url(${b.img}); el.style.backgroundSize='cover'; el.style.backgroundPosition='center'; el.style.backgroundColor='transparent'; }
+    if(b.img){ el.style.backgroundImage = `url(${b.img})`; el.style.backgroundSize='cover'; el.style.backgroundPosition='center'; el.style.backgroundColor='transparent'; }
     else { el.style.backgroundImage=''; el.style.backgroundColor = b.color; }
   }
 
@@ -404,7 +401,7 @@
       } else {
         const pct = Math.max(0, Math.min(1, (b.hpCur||0) / (b.maxHP||1)));
         const rcol = Math.floor(255*(1-pct)), gcol = Math.floor(200*pct);
-        ctx.fillStyle = rgb(${rcol}, ${gcol}, 40);
+        ctx.fillStyle = `rgb(${rcol}, ${gcol}, 40)`;
         ctx.fillRect(bx + 1, by + 1, (barW - 2) * pct, barH - 2);
       }
       ctx.strokeStyle = '#cfeaf6'; ctx.strokeRect(bx,by,barW,barH);
@@ -610,7 +607,7 @@
 
     // mark defeated
     balls.forEach(b=>{
-      const label = document.querySelector(.defeated-label[data-def="${b.id}"]);
+      const label = document.querySelector(`.defeated-label[data-def="${b.id}"]`);
       if(b.defeated){ b.alive = false; if(label) label.style.display = 'block'; }
       else if(label) label.style.display = 'none';
     });
@@ -634,7 +631,7 @@
     rafId = requestAnimationFrame(simLoop);
   }
 
-  function pairKey(a,b){ return a.id < b.id ? ${a.id}-${b.id} : ${b.id}-${a.id}; }
+  function pairKey(a,b){ return a.id < b.id ? `${a.id}-${b.id}` : `${b.id}-${a.id}`; }
 
   function applyDamage(A,B){
     const dmgA = Number(A.damage) || 1;
@@ -651,8 +648,8 @@
     winnerPopup.classList.remove('hidden');
     if(!b){ winnerText.innerText = 'No winner'; winnerIcon.style.background = '#fff'; }
     else {
-      winnerText.innerText = ${b.name} WON!;
-      if(b._imgObj){ winnerIcon.style.backgroundImage = url(${b.img}); winnerIcon.style.backgroundSize = 'cover'; winnerIcon.style.backgroundPosition = 'center'; }
+      winnerText.innerText = `${b.name} WON!`;
+      if(b._imgObj){ winnerIcon.style.backgroundImage = `url(${b.img})`; winnerIcon.style.backgroundSize = 'cover'; winnerIcon.style.backgroundPosition = 'center'; }
       else { winnerIcon.style.backgroundImage = ''; winnerIcon.style.backgroundColor = b.color || '#ddd'; }
     }
   }
@@ -784,3 +781,111 @@
       showEl.animate([{ opacity:0, transform:'translateX(6px)' }, { opacity:1, transform:'translateX(0px)' }], { duration:240, easing:'ease-out' });
     }
   }
+
+  selBalls?.addEventListener('click', ()=>{
+    selBalls.classList.add('sel-active'); selZone.classList.remove('sel-active'); selPowerups.classList.remove('sel-active');
+    animatePanelSwitch(zonePanel, ballPanel);
+    animatePanelSwitch(powerupsPanel, ballPanel);
+  });
+  selZone?.addEventListener('click', ()=>{
+    selZone.classList.add('sel-active'); selBalls.classList.remove('sel-active'); selPowerups.classList.remove('sel-active');
+    animatePanelSwitch(ballPanel, zonePanel);
+    animatePanelSwitch(powerupsPanel, zonePanel);
+  });
+  selPowerups?.addEventListener('click', ()=>{
+    selPowerups.classList.add('sel-active'); selBalls.classList.remove('sel-active'); selZone.classList.remove('sel-active');
+    animatePanelSwitch(ballPanel, powerupsPanel);
+    animatePanelSwitch(zonePanel, powerupsPanel);
+  });
+
+  // POWERUPS UI logic
+  function renderPowerupCard(p){
+    let card = document.querySelector(`.powerup-card[data-id="${p.id}"]`);
+    if(card) return;
+    card = document.createElement('div');
+    card.className = 'powerup-card';
+    card.dataset.id = p.id;
+    card.innerHTML = `
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div class="icon-preview" style="width:48px;height:48px;border-radius:8px;background:${p.color || '#ddd'}; background-size:cover; background-position:center; ${p.img ? `background-image:url(${p.img});` : '' }"></div>
+        <div style="flex:1;">
+          <input class="powerup-name" value="${p.name}" />
+          <div style="font-size:12px;color:#556">Type: ${p.type || 'Generic'}</div>
+        </div>
+        <button class="delete-powerup">Delete</button>
+      </div>
+      <details style="margin-top:8px;">
+        <summary>HP</summary>
+        <div style="display:flex;flex-direction:column;gap:6px;padding:8px;">
+          <label>HP Change (immediate): <input class="pu-hp-change" type="number" value="${p.hpChange||0}" /></label>
+          <label>HP/s (over time): <input class="pu-hp-per-s" type="number" value="${p.hpPerS||0}" /></label>
+          <label>HP/s Time (s): <input class="pu-hp-time" type="number" value="${p.hpTime||0}" /></label>
+        </div>
+      </details>
+      <details>
+        <summary>Speed</summary>
+        <div style="display:flex;flex-direction:column;gap:6px;padding:8px;">
+          <label>Speed Change (immediate): <input class="pu-speed-change" type="number" value="${p.speedChange||0}" /></label>
+          <label>Temporary Speed Change: <input class="pu-temp-speed" type="number" value="${p.tempSpeed||0}" /></label>
+          <label>Temporary Speed Time (s): <input class="pu-temp-time" type="number" value="${p.tempTime||0}" /></label>
+        </div>
+      </details>
+      <details>
+        <summary>Damage Buff</summary>
+        <div style="display:flex;flex-direction:column;gap:6px;padding:8px;">
+          <label>Damage Change (immediate): <input class="pu-damage-change" type="number" value="${p.damageChange||0}" /></label>
+          <label>Damage/s (over time): <input class="pu-damage-per-s" type="number" value="${p.damagePerS||0}" /></label>
+          <label>Duration (s): <input class="pu-damage-time" type="number" value="${p.damageTime||0}" /></label>
+        </div>
+      </details>
+      <div style="display:flex;gap:8px;margin-top:8px;align-items:center;">
+        <label>Image: <input class="pu-img-file" type="file" accept="image/*" /></label>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px;align-items:center;">
+        <label>Spawn Tmin: <input class="pu-spawn-min" type="number" value="${p.spawnMin||1}" /></label>
+        <label>Spawn Tmax: <input class="pu-spawn-max" type="number" value="${p.spawnMax||5}" /></label>
+        <label>Pickup Size: <input class="pu-size" type="number" value="${p.pickupSize||28}" /></label>
+        <label>Decay Time (s): <input class="pu-decay" type="number" value="${p.decay||12}" /></label>
+      </div>
+    `;
+    powerupListEl.appendChild(card);
+
+    card.querySelector('.delete-powerup').addEventListener('click', ()=>{
+      const idx = powerups.findIndex(x=>x.id===p.id);
+      if(idx>=0) { powerups.splice(idx,1); card.remove(); }
+    });
+
+    // wire file upload
+    const fileInput = card.querySelector('.pu-img-file');
+    fileInput.addEventListener('change', ()=>{
+      const f = fileInput.files && fileInput.files[0];
+      if(!f) return;
+      const r = new FileReader();
+      r.onload = ()=>{ p.img = r.result; card.querySelector('.icon-preview').style.backgroundImage = `url(${p.img})`; };
+      r.readAsDataURL(f);
+    });
+
+    // wire simple inputs to model (live updates)
+    const wire = (sel, prop, cast=Number) => {
+      const el = card.querySelector(sel);
+      if(!el) return;
+      el.addEventListener('input', ()=>{ p[prop] = cast === Number ? (Number(el.value)||0) : el.value; });
+    };
+    wire('.powerup-name','name', String);
+    wire('.pu-hp-change','hpChange', Number); wire('.pu-hp-per-s','hpPerS', Number); wire('.pu-hp-time','hpTime', Number);
+    wire('.pu-speed-change','speedChange', Number); wire('.pu-temp-speed','tempSpeed', Number); wire('.pu-temp-time','tempTime', Number);
+    wire('.pu-damage-change','damageChange', Number); wire('.pu-damage-per-s','damagePerS', Number); wire('.pu-damage-time','damageTime', Number);
+    wire('.pu-spawn-min','spawnMin', Number); wire('.pu-spawn-max','spawnMax', Number); wire('.pu-size','pickupSize', Number); wire('.pu-decay','decay', Number);
+  }
+
+  addPowerupBtn?.addEventListener('click', ()=>{
+    const id = uid();
+    const p = { id, name: `Powerup ${powerups.length+1}`, type:'Generic', img:null, color:'#f4f4f4' };
+    powerups.push(p);
+    renderPowerupCard(p);
+  });
+
+  // expose drawPreview for debugging
+  window.drawPreview = drawPreview;
+
+})();
