@@ -1,116 +1,191 @@
-/* Background with very light gradient */
-body {
+/* Basic Reset */
+* {
     margin: 0;
     padding: 0;
+    box-sizing: border-box;
+}
+
+body {
     font-family: Arial, sans-serif;
     overflow: hidden;
-    background: linear-gradient(135deg, #ffffff, #fafafa);
+    background: linear-gradient(135deg, #ffffff, #f7f7f7);
+    color: #222;
 }
 
-/* Menu styling */
-#menu {
-    position: absolute;
-    top: 50px;
-    left: 40px;
-    z-index: 2;
-    max-width: 500px;
-}
-
-h1 {
-    font-size: 4rem;
-    margin: 0;
-    color: #000;
-}
-
-.subtitle {
-    font-size: 1rem;
-    color: #666;
-    margin-bottom: 30px;
-}
-
-/* Menu Buttons */
-.menu-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.menu-item active {
-    display: inline-block;
-    width: 250px;
-    font-size: 2rem;
-    text-align: center;
-    padding: 15px 0;
-    margin-bottom: 20px;
+/* Top Bar */
+.top-bar {
+    width: 100%;
+    background: #000;
     color: #fff;
-    text-decoration: none;
-    border-radius: 10px;
-    background: linear-gradient(90deg, #4a90e2, #5cb3ff);
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 30px;
+    position: relative;
+    z-index: 5;
+}
+
+.logo {
+    font-size: 2rem;
     font-weight: bold;
 }
 
-.menu-item:hover {
-    background: linear-gradient(90deg, #3c7ecb, #4fa2eb);
-    transform: scale(1.05);
-}
-
-.menu-item.disabled {
-    background: linear-gradient(90deg, #cccccc, #bbbbbb);
-    color: #888;
-    pointer-events: none;
-    opacity: 0.5;
-    box-shadow: none;
-}
-
-/* Discord section */
-.discord-wrapper {
-    margin-top: 30px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    position: relative;
-}
-
-.discord-icon {
-    width: 50px;
-    height: 50px;
+.discord-btn img {
+    width: 40px;
+    height: 40px;
     cursor: pointer;
 }
 
-.discord-text-btn {
-    display: inline-block;
-    padding: 12px 20px;
-    font-size: 1rem;
-    text-decoration: none;
+/* Tab Selector */
+.tab-selector {
+    background: #111;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    padding: 15px 0;
+    border-radius: 0 0 15px 15px;
+    position: relative;
+    z-index: 4;
+}
+
+.tab {
+    background: #333;
     color: #fff;
-    border-radius: 8px;
-    background: linear-gradient(90deg, #7289da, #5b6eae);
+    border: none;
+    padding: 12px 25px;
+    font-size: 1.2rem;
+    border-radius: 30px;
+    cursor: pointer;
     transition: all 0.3s ease;
+}
+
+.tab.active {
+    background: #4a90e2;
+}
+
+.tab:hover {
+    background: #5cb3ff;
+}
+
+/* Content Sections */
+main {
+    position: relative;
+    z-index: 3;
+    padding: 30px;
+}
+
+/* Sandboxes Page */
+.cards-container {
+    display: flex;
+    gap: 30px;
+    justify-content: center;
+    margin-top: 50px;
+}
+
+.card {
+    width: 300px;
+    background: #fff;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    overflow: hidden;
+    text-align: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    cursor: pointer;
+}
+
+.card img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+}
+
+.card h2 {
+    font-size: 1.5rem;
+    margin: 15px 0;
+}
+
+.card p {
+    font-size: 1rem;
+    padding: 0 10px 15px;
+    color: #444;
+}
+
+.card .play-btn {
+    display: inline-block;
+    margin: 10px 0 20px;
+    padding: 10px 20px;
+    background: linear-gradient(90deg, #4a90e2, #5cb3ff);
+    color: #fff;
+    border-radius: 10px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.card .play-btn:hover {
+    background: linear-gradient(90deg, #3c7ecb, #4fa2eb);
+}
+
+.card:hover {
+    transform: scale(1.05) rotateY(3deg);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+}
+
+/* Disabled Cards */
+.card.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.card.disabled:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+.coming-soon {
+    display: block;
+    margin-bottom: 15px;
+    font-size: 0.9rem;
+    color: #999;
+}
+
+/* News Page */
+.news-container {
+    max-width: 800px;
+    margin: 50px auto;
+    text-align: left;
+}
+
+.news-container h2 {
+    font-size: 2rem;
+    margin-bottom: 20px;
+}
+
+.news-container article {
+    margin-bottom: 20px;
+}
+
+.discord-note {
+    margin-top: 20px;
     font-weight: bold;
 }
 
-.discord-text-btn:hover {
-    background: linear-gradient(90deg, #5b6eae, #3b4f8f);
-    transform: scale(1.05);
+/* Options Page */
+.options-container {
+    max-width: 500px;
+    margin: 50px auto;
 }
 
-.popover {
-    display: none;
-    position: absolute;
-    top: -50px;
-    left: 0;
-    background: #333;
-    color: #fff;
-    padding: 10px;
-    font-size: 0.9rem;
-    border-radius: 8px;
-    white-space: nowrap;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+.options-container h2 {
+    margin-bottom: 20px;
 }
 
-/* ALPHA text bottom-right */
+.options-container label {
+    display: block;
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+}
+
+/* Page Version */
 .page-version {
     position: fixed;
     bottom: 15px;
@@ -121,7 +196,7 @@ h1 {
     opacity: 0.8;
 }
 
-/* Canvas for balls */
+/* Canvas for background balls */
 #ballCanvas {
     position: fixed;
     top: 0;
@@ -129,4 +204,13 @@ h1 {
     width: 100%;
     height: 100%;
     z-index: 1;
+}
+
+/* Hide inactive sections */
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
 }
