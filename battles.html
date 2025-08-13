@@ -1,150 +1,92 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>BrawlSpheres - Battles</title>
-  <link rel="stylesheet" href="style.css" />
-</head>
-<body class="battle-page">
+<!-- ====== Replace Zone panel with this (inside <main>) ====== -->
+<div id="zonePanel" class="ball-panel hidden" aria-hidden="true">
+  <h4>Zone Settings</h4>
 
-  <!-- persistent audio if opened directly -->
-  <audio id="bgAudio" src="https://vgmsite.com/soundtracks/armored-core-nexus/zahvmqai/1-02.%20World%20Navigation.mp3" loop preload="auto" autoplay></audio>
-
-  <div id="app">
-    <div class="page-topbar">
-      <button id="backBtn" class="back-btn">← Main Menu</button>
-      <div class="page-title">Battles</div>
-      <div class="top-spacer"></div>
-    </div>
-
-    <div class="battle-container wide">
-      <aside class="preview-area" id="previewColumn">
-        <div class="preview-header">
-          <h2 id="previewTitle">Spawn Preview</h2>
-          <button id="previewToggle" class="small-toggle">Preview ▸</button>
-        </div>
-        <div class="canvas-wrap" id="previewWrap">
-          <canvas id="spawnCanvas"></canvas>
-        </div>
-        <p class="preview-hint">Drag balls inside the preview to set spawn points. Tap preview toggle on mobile to expand.</p>
-      </aside>
-
-      <main class="editor-area">
-        <div class="editor-header">
-          <div style="display:flex;align-items:center;gap:12px;">
-            <h3>Configuration</h3>
-            <div class="menu-selector" style="display:flex; gap:8px;">
-              <button id="selBalls" class="menu-btn small sel-active">Balls</button>
-              <button id="selZone" class="menu-btn small">Zone</button>
-              <button id="selPowerups" class="menu-btn small">Powerups</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Balls panel -->
-        <div id="ballPanel" class="ball-panel" aria-hidden="false">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-            <h4>Balls</h4>
-            <button id="addBallBtn" class="add-btn">+ Add Ball</button>
-          </div>
-          <div id="ballList" class="ball-list"></div>
-        </div>
-
-        <!-- Zone panel -->
-        <div id="zonePanel" class="ball-panel hidden" aria-hidden="true">
-          <h4>Zone Settings</h4>
-          <div class="field-inline"><label>Start Size (%)</label><input id="zoneStart" type="number" min="10" max="200" value="100" /></div>
-          <div class="field-inline"><label>Spawn Delay (s)</label><input id="zoneSpawnDelay" type="number" min="0" value="1" /></div>
-          <div class="field-inline"><label>Delay before close (s)</label><input id="zoneDelay" type="number" min="0" value="8" /></div>
-          <div class="field-inline"><label>Close Duration (s)</label><input id="zoneDuration" type="number" min="1" value="30" /></div>
-          <div class="field-inline"><label>Zone DPS</label><input id="zoneDPS" type="number" min="0" value="4" /></div>
-          <div class="field-inline"><label>Damage Delay (s)</label><input id="zoneDamageDelay" type="number" min="0" value="0.5" /></div>
-        </div>
-
-        <!-- Powerups panel -->
-        <div id="powerupsPanel" class="ball-panel hidden" aria-hidden="true">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-            <h4>Powerups</h4>
-            <button id="addPowerupBtn" class="add-btn">+ Add Powerup</button>
-          </div>
-          <div id="powerupList" class="ball-list"></div>
-        </div>
-
-      </main>
-    </div>
-
-    <div class="bottom-bar">
-      <button id="startGameBtn" class="start-btn">Start Game</button>
-      <!-- end button disabled by default until a match is running -->
-      <button id="endGameBtn" class="start-btn" disabled style="margin-left:8px;background:linear-gradient(90deg,#ff9a9a,#ff6b6b);">End Game</button>
-    </div>
-
-    <!-- Icon/Color picker modal -->
-    <div id="iconModal" class="modal hidden" aria-hidden="true">
-      <div class="modal-content">
-        <h3>Choose ball appearance</h3>
-        <div class="modal-body">
-          <label>Pick color: <input id="modalColor" type="color" value="#ff7f50" /></label>
-          <label>Upload image: <input id="modalFile" type="file" accept="image/*" /></label>
-        </div>
-        <div class="modal-actions">
-          <button id="modalApply" class="add-btn">Apply</button>
-          <button id="modalCancel" class="small">Cancel</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Weapon customiser -->
-    <div id="weaponModal" class="modal hidden" aria-hidden="true">
-      <div class="modal-content weapon-modal-content">
-        <div class="weapon-left">
-          <h3>Weapon Customiser</h3>
-          <div class="modal-body">
-            <label>Asset (default 34.png): <input id="weaponFile" type="file" accept="image/*" /></label>
-            <div class="field-inline"><label>Damage</label><input id="weaponDamage" type="number" value="10" /></div>
-            <div class="field-inline"><label>Rotation Speed (deg/s)</label><input id="weaponRot" type="number" value="180" /></div>
-            <div class="field-inline"><label>Parry Chance (%)</label><input id="weaponParry" type="number" min="0" max="100" value="20" /></div>
-            <div class="field-inline"><label>Width</label><input id="weaponWidth" type="number" value="10" /></div>
-            <div class="field-inline"><label>Length</label><input id="weaponLength" type="number" value="48" /></div>
-          </div>
-          <div class="modal-actions">
-            <button id="weaponApply" class="add-btn">Apply</button>
-            <button id="weaponCancel" class="small">Cancel</button>
-          </div>
-        </div>
-        <div class="weapon-right">
-          <h4>Preview</h4>
-          <div id="weaponPreview" class="weapon-preview">
-            <canvas id="weaponCanvas" width="260" height="260"></canvas>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Loading / countdown overlay -->
-    <div id="gameOverlay" class="overlay hidden">
-      <div class="overlay-inner" id="overlayInner">
-        <div id="loadingText">Initializing...</div>
-        <div id="countdown" class="countdown hidden"></div>
-      </div>
-    </div>
-
-    <!-- Winner popup -->
-    <div id="winnerPopup" class="modal hidden" aria-hidden="true">
-      <div class="modal-content">
-        <div id="winnerIcon" style="width:96px; height:96px; margin: 0 auto 12px; border-radius:50%; overflow:hidden;"></div>
-        <h2 id="winnerText" style="text-align:center; margin:0 0 12px;">Ball X WON!</h2>
-        <div style="display:flex; gap:8px; justify-content:center;">
-          <button id="exitEditor" class="add-btn">Exit to Editor</button>
-          <button id="exitMenu" class="back-btn">Exit to Main Menu</button>
-        </div>
-      </div>
-    </div>
-
+  <div class="zone-toggle">
+    <label for="zoneEnabled">Zone Active</label>
+    <input id="zoneEnabled" type="checkbox" checked />
   </div>
 
-  <script src="main.js"></script>
-  <script src="battles.js"></script>
-</body>
-</html>
+  <div class="field-inline"><label>Start Size (%)</label><input id="zoneStart" type="number" min="10" max="200" value="100" /></div>
+  <div class="field-inline"><label>Spawn Delay (s)</label><input id="zoneSpawnDelay" type="number" min="0" value="1" /></div>
+  <div class="field-inline"><label>Delay before close (s)</label><input id="zoneDelay" type="number" min="0" value="8" /></div>
+  <div class="field-inline"><label>Close Duration (s)</label><input id="zoneDuration" type="number" min="1" value="30" /></div>
+  <div class="field-inline"><label>Zone DPS</label><input id="zoneDPS" type="number" min="0" value="4" /></div>
+  <div class="field-inline"><label>Damage Delay (s)</label><input id="zoneDamageDelay" type="number" min="0" value="0.5" /></div>
+</div>
+
+<!-- ====== Add a new Physics panel (skeleton) ====== -->
+<div id="physicsPanel" class="ball-panel hidden" aria-hidden="true">
+  <h4>Physics</h4>
+  <div class="physics-panel">
+    <div class="physics-row">
+      <label for="physicsSpeedTransfer">Speed transfer on hit</label>
+      <input id="physicsSpeedTransfer" type="checkbox" checked />
+    </div>
+    <div class="physics-row">
+      <label for="physicsElasticity">Elastic collisions (0-1)</label>
+      <input id="physicsElasticity" type="number" min="0" max="1" step="0.05" value="1" />
+    </div>
+    <div class="physics-row">
+      <label for="physicsFriction">Global friction multiplier</label>
+      <input id="physicsFriction" type="number" min="0" max="1" step="0.01" value="1" />
+    </div>
+  </div>
+</div>
+
+<!-- ====== Replace the Weapon Customiser modal contents with this (adds Melee/Ranged + uploads) ====== -->
+<div id="weaponModal" class="modal hidden" aria-hidden="true">
+  <div class="modal-content weapon-modal-content" style="max-width:920px;">
+    <div class="weapon-left">
+      <h3>Weapon Customiser</h3>
+      <div class="modal-body">
+        <div class="weapon-type-row">
+          <button id="weaponTypeMelee" class="small">Melee</button>
+          <button id="weaponTypeRanged" class="small">Ranged</button>
+        </div>
+
+        <!-- common -->
+        <div id="weaponCommon">
+          <label>Asset (default melee 34.png): <input id="weaponFile" type="file" accept="image/*" /></label>
+          <div class="field-inline"><label>Damage</label><input id="weaponDamage" type="number" value="10" /></div>
+          <div class="field-inline"><label>Rotation Speed (deg/s)</label><input id="weaponRot" type="number" value="180" /></div>
+          <div class="field-inline"><label>Parry Chance (%)</label><input id="weaponParry" type="number" min="0" max="100" value="20" /></div>
+          <div class="field-inline"><label>Width</label><input id="weaponWidth" type="number" value="10" /></div>
+          <div class="field-inline"><label>Length</label><input id="weaponLength" type="number" value="48" /></div>
+        </div>
+
+        <!-- ranged-specific -->
+        <div id="weaponRanged" class="hidden">
+          <label>Gun asset (default gun): <input id="weaponGunFile" type="file" accept="image/*" /></label>
+          <label>Bullet asset (default bullet): <input id="weaponBulletFile" type="file" accept="image/*" /></label>
+
+          <details class="collapsible"><summary>Weapon</summary>
+            <div class="field-inline"><label>Lock-On Range</label><input id="weaponLockRange" type="number" value="220" /></div>
+            <div class="field-inline"><label>Fire Cooldown (s)</label><input id="weaponFireCooldown" type="number" value="0.7" /></div>
+            <div class="field-inline"><label>Magazine Size</label><input id="weaponMagazine" type="number" value="999" /></div>
+          </details>
+
+          <details class="collapsible"><summary>Projectile</summary>
+            <div class="field-inline"><label>Projectile Speed</label><input id="weaponProjSpeed" type="number" value="420" /></div>
+            <div class="field-inline"><label>Projectile Damage</label><input id="weaponProjDmg" type="number" value="12" /></div>
+            <div class="field-inline"><label>Homing Range</label><input id="weaponProjHomingRange" type="number" value="0" /></div>
+            <div class="field-inline"><label>Homing Turn Speed (deg/s)</label><input id="weaponProjTurn" type="number" value="0" /></div>
+          </details>
+        </div>
+
+      </div>
+
+      <div class="modal-actions">
+        <button id="weaponApply" class="add-btn">Apply</button>
+        <button id="weaponCancel" class="small">Cancel</button>
+      </div>
+    </div>
+
+    <div class="weapon-right">
+      <h4>Preview</h4>
+      <div id="weaponPreview" class="weapon-preview">
+        <canvas id="weaponCanvas" width="260" height="260"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
