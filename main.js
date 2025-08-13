@@ -50,8 +50,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const balls = [
-        new Ball(100, 100, 30, '#ff5555', 4, 3),
-        new Ball(200, 200, 30, '#55aaff', -3, 4)
+        new Ball(0, 0, 30, '#ff5555', 4, 3),
+        new Ball(0, 0, 30, '#55aaff', -3, 4)
     ];
 
     function animate() {
