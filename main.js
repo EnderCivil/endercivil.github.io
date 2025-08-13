@@ -1,16 +1,28 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const popover = document.getElementById('popover');
-    
-    // Show popover only on first launch
-    if (!localStorage.getItem('popoverShown')) {
-        popover.style.display = 'block';
-        setTimeout(() => {
-            popover.style.display = 'none';
-        }, 5000);
-        localStorage.setItem('popoverShown', 'true');
+    // Tab switching logic
+    const tabs = document.querySelectorAll('.tab');
+    const contents = document.querySelectorAll('.tab-content');
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            tabs.forEach(t => t.classList.remove('active'));
+            contents.forEach(c => c.classList.remove('active'));
+
+            tab.classList.add('active');
+            document.getElementById(tab.dataset.tab).classList.add('active');
+        });
+    });
+
+    // Volume controls
+    const music = document.getElementById('bgMusic');
+    const musicSlider = document.getElementById('musicVolume');
+    if (musicSlider) {
+        musicSlider.addEventListener('input', () => {
+            music.volume = musicSlider.value;
+        });
     }
 
-    // Canvas for bouncing balls
+    // Background balls
     const canvas = document.getElementById('ballCanvas');
     const ctx = canvas.getContext('2d');
     canvas.width = window.innerWidth;
@@ -49,10 +61,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Spawn balls on the right side
     const balls = [
-        new Ball(canvas.width - 150, 100, 30, '#4a90e2', -3, 3),
-        new Ball(canvas.width - 250, 300, 30, '#5cb3ff', -4, 2)
+        new Ball(canvas.width - 100, 150, 30, '#4a90e2', -2, 3),
+        new Ball(canvas.width - 200, 350, 30, '#5cb3ff', -3, 2),
+        new Ball(canvas.width - 250, 250, 30, '#8ab6f9', -2.5, 2.5)
     ];
 
     function animate() {
