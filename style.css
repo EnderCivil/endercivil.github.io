@@ -35,7 +35,7 @@ h1 {
     margin: 0;
 }
 
-.menu-item {
+.menu-item active {
     display: inline-block;
     width: 250px;
     font-size: 2rem;
