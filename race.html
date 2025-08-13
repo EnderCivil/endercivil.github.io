@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>BrawlSpheres - Race Editor</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="battle-page">
+  <div id="app">
+    <div class="page-topbar">
+      <button id="backBtn" class="back-btn">← Main Menu</button>
+      <div class="page-title">Race Editor</div>
+      <div class="top-spacer"></div>
+    </div>
+
+    <div class="battle-container wide" style="align-items:flex-start;">
+      <aside class="preview-area" style="flex:1 0 720px;">
+        <div class="preview-header">
+          <h2>Level Editor</h2>
+          <div>
+            <button id="zoomIn" class="small">+</button>
+            <button id="zoomOut" class="small">-</button>
+          </div>
+        </div>
+        <div id="levelWrap" class="canvas-wrap" style="height:640px; position:relative;">
+          <div id="levelEditor" style="position:absolute;left:0;top:0;right:0;bottom:0;overflow:hidden;background:linear-gradient(180deg,#f8fbff,#ffffff);"></div>
+        </div>
+
+        <div style="display:flex;gap:8px;margin-top:8px;align-items:center;">
+          <div style="flex:1"></div>
+          <div id="partsPalette" style="display:flex;gap:8px;align-items:center;">Parts palette:</div>
+        </div>
+      </aside>
+
+      <main class="editor-area" style="flex:0 0 420px;">
+        <div class="editor-header"><h3>Configuration</h3></div>
+
+        <div class="ball-panel" style="padding:12px;">
+          <h4>Parts</h4>
+          <div id="partsList" style="display:flex;flex-direction:column;gap:8px;"></div>
+
+          <h4 style="margin-top:12px;">Presets</h4>
+          <div id="presetsList" style="display:flex;flex-direction:column;gap:8px;min-height:120px;"></div>
+          <div style="display:flex;gap:8px;margin-top:8px;">
+            <button id="importPreset" class="add-btn">Import .txt</button>
+            <button id="exportPreset" class="small">Export</button>
+            <button id="savePreset" class="menu-btn small">Save Preset</button>
+          </div>
+
+          <h4 style="margin-top:12px;">Parts Info</h4>
+          <div style="font-size:13px;color:#2b3946;">Drag parts from the palette into the level (click a part then click the level to place). Select a part to resize or double-click to configure.</div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <div id="partConfigModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-content">
+      <h3 id="partConfigTitle">Configure Part</h3>
+      <div class="modal-body" id="partConfigBody"></div>
+      <div class="modal-actions"><button id="partConfigSave" class="add-btn">Save</button><button id="partConfigCancel" class="small">Cancel</button></div>
+    </div>
+  </div>
+
+  <script src="main.js"></script>
+  <script src="race.js"></script>
+</body>
+</html>
