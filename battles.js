@@ -1,4 +1,4 @@
-updated: fixes + powerups + zone visuals + weapon toggles + robust start/end
+// battles.js — updated: fixes + powerups + zone visuals + weapon toggles + robust start/end
 (() => {
   // DOM refs
   const addBtn = document.getElementById('addBallBtn');
