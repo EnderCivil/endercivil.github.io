@@ -11,24 +11,76 @@
         <source src="https://vgmsite.com/soundtracks/armored-core-nexus/zahvmqai/1-02.%20World%20Navigation.mp3" type="audio/mpeg">
     </audio>
 
-    <div id="menu">
-        <h1>BrawlSpheres</h1>
-        <p class="subtitle">Customisable ball battles in chaotic arenas. Create, fight, and smash your way to victory.</p>
+    <!-- Top Navigation -->
+    <header class="top-bar">
+        <div class="logo">BrawlSpheres</div>
+        <a href="https://discord.gg/BPvWwaaQMH" target="_blank" class="discord-btn">
+            <img src="https://cdn-icons-png.flaticon.com/512/5968/5968756.png" alt="Discord">
+        </a>
+    </header>
 
-        <ul class="menu-list">
-            <li><a href="Battles.html" class="menu-item active">Battles</a></li>
-            <li><a href="#" class="menu-item disabled">Races</a></li>
-            <li><a href="#" class="menu-item disabled">Breakouts</a></li>
-        </ul>
+    <!-- Tab Selector -->
+    <nav class="tab-selector">
+        <button class="tab active" data-tab="sandboxes">Sandboxes</button>
+        <button class="tab" data-tab="news">News</button>
+        <button class="tab" data-tab="options">Options</button>
+    </nav>
 
-        <div class="discord-wrapper">
-            <a href="https://discord.gg/BPvWwaaQMH" target="_blank">
-                <img src="https://cdn-icons-png.flaticon.com/512/5968/5968756.png" alt="Discord" class="discord-icon">
-            </a>
-            <a href="https://discord.gg/BPvWwaaQMH" target="_blank" class="discord-text-btn">Join Discord</a>
-            <div id="popover" class="popover">Read the full patch notes in the official discord server!</div>
-        </div>
-    </div>
+    <!-- Content Sections -->
+    <main>
+        <!-- Sandboxes Page -->
+        <section id="sandboxes" class="tab-content active">
+            <div class="cards-container">
+                <!-- Battles Card -->
+                <div class="card">
+                    <img src="https://via.placeholder.com/400x200?text=Battles+Preview" alt="Battles Preview">
+                    <h2>Battles</h2>
+                    <p>A sandbox mode where a customizable amount of balls fight to the death, each with unique attributes and weapons.</p>
+                    <a href="Battles.html" class="play-btn">Play</a>
+                </div>
+                <!-- Races Card -->
+                <div class="card disabled">
+                    <img src="https://via.placeholder.com/400x200?text=Races+Preview" alt="Races Preview">
+                    <h2>Races</h2>
+                    <p>Race through arenas and mazes, dodging obstacles to hit the finish line. Fully customizable with a level editor.</p>
+                    <span class="coming-soon">Coming Soon</span>
+                </div>
+                <!-- Breakouts Card -->
+                <div class="card disabled">
+                    <img src="https://via.placeholder.com/400x200?text=Breakouts+Preview" alt="Breakouts Preview">
+                    <h2>Breakouts</h2>
+                    <p>Team-based chaos where balls destroy borders over time. Highly customizable for intense matches.</p>
+                    <span class="coming-soon">Coming Soon</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- News Page -->
+        <section id="news" class="tab-content">
+            <div class="news-container">
+                <h2>Latest Updates</h2>
+                <article>
+                    <h3>Update 0.1 - Initial Alpha</h3>
+                    <p>Introduced Battles mode and basic customization. Many more features coming soon!</p>
+                </article>
+                <article>
+                    <h3>Coming Soon</h3>
+                    <p>Races and Breakouts modes are under development. Stay tuned for updates.</p>
+                </article>
+                <p class="discord-note">Join our <a href="https://discord.gg/BPvWwaaQMH" target="_blank">Discord</a> for full patch notes!</p>
+            </div>
+        </section>
+
+        <!-- Options Page -->
+        <section id="options" class="tab-content">
+            <div class="options-container">
+                <h2>Settings</h2>
+                <label>Music Volume: <input type="range" id="musicVolume" min="0" max="1" step="0.01" value="1"></label>
+                <label>SFX Volume: <input type="range" id="sfxVolume" min="0" max="1" step="0.01" value="1"></label>
+                <p>More options coming soon!</p>
+            </div>
+        </section>
+    </main>
 
     <div class="page-version">ALPHA</div>
 
