@@ -49,9 +49,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Spawn balls on the right side
     const balls = [
-        new Ball(0, 0, 30, '#ff5555', 4, 3),
-        new Ball(0, 0, 30, '#55aaff', -3, 4)
+        new Ball(canvas.width - 150, 100, 30, '#4a90e2', -3, 3),
+        new Ball(canvas.width - 250, 300, 30, '#5cb3ff', -4, 2)
     ];
 
     function animate() {
