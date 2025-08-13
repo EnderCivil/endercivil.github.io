@@ -1,58 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>BrawlSpheres - Main Menu</title>
-  <link rel="stylesheet" href="style.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BrawlSpheres</title>
+    <link rel="stylesheet" href="style.css">
 </head>
-<body class="menu-page">
+<body>
+    <audio id="bgMusic" autoplay loop>
+        <source src="https://vgmsite.com/soundtracks/armored-core-nexus/zahvmqai/1-02.%20World%20Navigation.mp3" type="audio/mpeg">
+    </audio>
 
-  <!-- Persistent audio. No UI to disable. -->
-  <audio id="bgAudio" src="https://vgmsite.com/soundtracks/armored-core-nexus/zahvmqai/1-02.%20World%20Navigation.mp3" loop preload="auto" autoplay></audio>
+    <div id="menu">
+        <h1>BrawlSpheres</h1>
+        <p class="subtitle">Customisable ball battles in chaotic arenas. Create, fight, and smash your way to victory.</p>
 
-  <!-- full-screen bouncing canvas behind UI -->
-  <canvas id="bgBounce" class="bg-bounce"></canvas>
+        <ul class="menu-list">
+            <li><a href="Battles.html" class="menu-item active">Battles</a></li>
+            <li><a href="#" class="menu-item disabled">Races</a></li>
+            <li><a href="#" class="menu-item disabled">Breakouts</a></li>
+        </ul>
 
-  <div id="app">
-    <div class="menu-wrap">
-      <div class="menu-left">
-        <header class="menu-header">
-          <h1 class="game-title">BrawlSpheres</h1>
-          <p class="game-desc">Customisable ball battles in chaotic arenas. Create, fight, and smash your way to victory.</p>
-        </header>
-
-        <nav class="menu-buttons">
-          <a href="battles.html" class="menu-btn page-link">⚔️ Battles</a>
-          <a href="#" class="menu-btn">🏁 Races</a>
-          <a href="#" class="menu-btn">⛓️‍💥 Breakouts</a>
-        </nav>
-
-        <div class="menu-actions-row">
-          <button id="newsBtn" class="menu-btn small">Patch Notes</button>
-          <a class="discord-btn" href="https://discord.gg/BPvWwaaQMH" target="_blank" rel="noopener">
-            <img src="https://cdn-icons-png.flaticon.com/512/5968/5968756.png" alt="Discord" />
-            Join Discord
-          </a>
+        <div class="discord-wrapper">
+            <a href="https://discord.gg/BPvWwaaQMH" target="_blank">
+                <img src="https://cdn-icons-png.flaticon.com/512/5968/5968756.png" alt="Discord" class="discord-icon">
+            </a>
+            <div id="popover" class="popover">Read the full patch notes in the official discord server!</div>
         </div>
-
-        <footer class="menu-footer">
-          <span class="username">EnderCivil</span>
-        </footer>
-      </div>
-
-  <!-- Patch notes modal -->
-  <div id="newsModal" class="modal hidden" aria-hidden="true">
-    <div class="modal-content">
-      <h3>Patch Notes — Latest</h3>
-      <div class="modal-body">
-      </div>
-      <div class="modal-actions">
-        <button id="newsClose" class="menu-btn small">Close</button>
-      </div>
     </div>
-  </div>
 
-  <script src="main.js"></script>
+    <canvas id="ballCanvas"></canvas>
+
+    <script src="main.js"></script>
 </body>
 </html>
