@@ -11,41 +11,39 @@
         <source src="https://vgmsite.com/soundtracks/armored-core-nexus/zahvmqai/1-02.%20World%20Navigation.mp3" type="audio/mpeg">
     </audio>
 
-    <!-- Top Navigation -->
+    <!-- Unified Top Bar with Tabs -->
     <header class="top-bar">
         <div class="logo">BrawlSpheres</div>
+        <nav class="tab-selector">
+            <button class="tab active" data-tab="sandboxes">Sandboxes</button>
+            <button class="tab" data-tab="news">News</button>
+            <button class="tab" data-tab="options">Options</button>
+        </nav>
         <a href="https://discord.gg/BPvWwaaQMH" target="_blank" class="discord-btn">
             <img src="https://cdn-icons-png.flaticon.com/512/5968/5968756.png" alt="Discord">
         </a>
     </header>
 
-    <!-- Tab Selector -->
-    <nav class="tab-selector">
-        <button class="tab active" data-tab="sandboxes">Sandboxes</button>
-        <button class="tab" data-tab="news">News</button>
-        <button class="tab" data-tab="options">Options</button>
-    </nav>
-
-    <!-- Content Sections -->
+    <!-- Main Content -->
     <main>
         <!-- Sandboxes Page -->
         <section id="sandboxes" class="tab-content active">
             <div class="cards-container">
-                <!-- Battles Card -->
+                <!-- Battles -->
                 <div class="card">
                     <img src="https://via.placeholder.com/400x200?text=Battles+Preview" alt="Battles Preview">
                     <h2>Battles</h2>
                     <p>A sandbox mode where a customizable amount of balls fight to the death, each with unique attributes and weapons.</p>
                     <a href="Battles.html" class="play-btn">Play</a>
                 </div>
-                <!-- Races Card -->
+                <!-- Races -->
                 <div class="card disabled">
                     <img src="https://via.placeholder.com/400x200?text=Races+Preview" alt="Races Preview">
                     <h2>Races</h2>
                     <p>Race through arenas and mazes, dodging obstacles to hit the finish line. Fully customizable with a level editor.</p>
                     <span class="coming-soon">Coming Soon</span>
                 </div>
-                <!-- Breakouts Card -->
+                <!-- Breakouts -->
                 <div class="card disabled">
                     <img src="https://via.placeholder.com/400x200?text=Breakouts+Preview" alt="Breakouts Preview">
                     <h2>Breakouts</h2>
@@ -82,8 +80,8 @@
         </section>
     </main>
 
+    <!-- Version & Canvas -->
     <div class="page-version">ALPHA</div>
-
     <canvas id="ballCanvas"></canvas>
 
     <script src="main.js"></script>
