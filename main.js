@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Tab switching logic
+    // Tab switching
     const tabs = document.querySelectorAll('.tab');
     const contents = document.querySelectorAll('.tab-content');
 
@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Volume controls
+    // Volume control
     const music = document.getElementById('bgMusic');
     const musicSlider = document.getElementById('musicVolume');
     if (musicSlider) {
@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Background balls
+    // Background Balls Animation
     const canvas = document.getElementById('ballCanvas');
     const ctx = canvas.getContext('2d');
     canvas.width = window.innerWidth;
@@ -64,9 +64,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const balls = [
         new Ball(canvas.width - 100, 150, 30, '#4a90e2', -2, 3),
         new Ball(canvas.width - 200, 350, 30, '#5cb3ff', -3, 2),
-        new Ball(canvas.width - 250, 250, 30, '#8ab6f9', -2.5, 2.5)
-        new Ball(canvas.width - 200, 250, 30, '#8ab6f9', -2.5, 2.5)
-        new Ball(canvas.width - 300, 250, 30, '#8ab6f9', -2.5, 2.5)
+        new Ball(canvas.width - 250, 250, 30, '#8ab6f9', -2.5, 2.5),
+        new Ball(canvas.width - 300, 450, 30, '#a3c9ff', -2.2, 1.8)
     ];
 
     function animate() {
