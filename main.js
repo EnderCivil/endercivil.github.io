@@ -65,6 +65,8 @@ document.addEventListener('DOMContentLoaded', () => {
         new Ball(canvas.width - 100, 150, 30, '#4a90e2', -2, 3),
         new Ball(canvas.width - 200, 350, 30, '#5cb3ff', -3, 2),
         new Ball(canvas.width - 250, 250, 30, '#8ab6f9', -2.5, 2.5)
+        new Ball(canvas.width - 200, 250, 30, '#8ab6f9', -2.5, 2.5)
+        new Ball(canvas.width - 300, 250, 30, '#8ab6f9', -2.5, 2.5)
     ];
 
     function animate() {
