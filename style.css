@@ -1,4 +1,4 @@
-/* Basic Reset */
+/* Reset */
 * {
     margin: 0;
     padding: 0;
@@ -8,11 +8,11 @@
 body {
     font-family: Arial, sans-serif;
     overflow: hidden;
-    background: linear-gradient(135deg, #ffffff, #f7f7f7);
+    background: linear-gradient(135deg, #ffffff, #f9f9f9);
     color: #222;
 }
 
-/* Top Bar */
+/* Top Bar with Tabs */
 .top-bar {
     width: 100%;
     background: #000;
@@ -26,7 +26,7 @@ body {
 }
 
 .logo {
-    font-size: 2rem;
+    font-size: 1.8rem;
     font-weight: bold;
 }
 
@@ -36,25 +36,19 @@ body {
     cursor: pointer;
 }
 
-/* Tab Selector */
+/* Tab Selector inside Top Bar */
 .tab-selector {
-    background: #111;
     display: flex;
-    justify-content: center;
-    gap: 20px;
-    padding: 15px 0;
-    border-radius: 0 0 15px 15px;
-    position: relative;
-    z-index: 4;
+    gap: 15px;
 }
 
 .tab {
     background: #333;
     color: #fff;
     border: none;
-    padding: 12px 25px;
-    font-size: 1.2rem;
-    border-radius: 30px;
+    padding: 10px 20px;
+    font-size: 1.1rem;
+    border-radius: 25px;
     cursor: pointer;
     transition: all 0.3s ease;
 }
@@ -67,14 +61,14 @@ body {
     background: #5cb3ff;
 }
 
-/* Content Sections */
+/* Main Content */
 main {
     position: relative;
     z-index: 3;
     padding: 30px;
 }
 
-/* Sandboxes Page */
+/* Cards */
 .cards-container {
     display: flex;
     gap: 30px;
@@ -125,9 +119,20 @@ main {
     background: linear-gradient(90deg, #3c7ecb, #4fa2eb);
 }
 
+/* Card Hover */
 .card:hover {
-    transform: scale(1.05) rotateY(3deg);
+    transform: scale(1.08) rotateY(4deg);
     box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+}
+
+/* Blur other cards when hovering */
+.cards-container:hover .card {
+    filter: blur(4px);
+    transition: 0.3s ease;
+}
+
+.cards-container .card:hover {
+    filter: blur(0);
 }
 
 /* Disabled Cards */
@@ -141,6 +146,7 @@ main {
     box-shadow: none;
 }
 
+/* Coming Soon text */
 .coming-soon {
     display: block;
     margin-bottom: 15px;
@@ -148,41 +154,20 @@ main {
     color: #999;
 }
 
-/* News Page */
-.news-container {
+/* News & Options */
+.news-container, .options-container {
     max-width: 800px;
     margin: 50px auto;
-    text-align: left;
 }
 
-.news-container h2 {
+.news-container h2, .options-container h2 {
     font-size: 2rem;
-    margin-bottom: 20px;
-}
-
-.news-container article {
     margin-bottom: 20px;
 }
 
 .discord-note {
     margin-top: 20px;
     font-weight: bold;
-}
-
-/* Options Page */
-.options-container {
-    max-width: 500px;
-    margin: 50px auto;
-}
-
-.options-container h2 {
-    margin-bottom: 20px;
-}
-
-.options-container label {
-    display: block;
-    margin-bottom: 15px;
-    font-size: 1.1rem;
 }
 
 /* Page Version */
@@ -196,7 +181,7 @@ main {
     opacity: 0.8;
 }
 
-/* Canvas for background balls */
+/* Background Canvas */
 #ballCanvas {
     position: fixed;
     top: 0;
