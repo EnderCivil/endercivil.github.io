@@ -1,109 +1,88 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>BrawlSpheres — Battles</title>
-  <link rel="stylesheet" href="battlesstyles.css">
+  <link rel="stylesheet" href="battles.css" />
 </head>
 <body>
-  <header class="topbar">
-    <a class="back-btn" href="https://endercivil.github.com">← Back to Menu</a>
-    <h1>BrawlSpheres — Battles (Editor)</h1>
+  <header class="top-bar">
+    <button id="backBtn" class="back-btn">← Back</button>
+    <h1>BrawlSpheres: Battles</h1>
   </header>
 
-  <main class="layout">
-    <!-- LEFT: Arena -->
-    <section class="arena-wrap">
-      <div class="arena-header">
-        <button id="startBtn">Start Game</button>
-        <button id="stopBtn" disabled>Stop Game</button>
-      </div>
-      <div class="arena">
-        <canvas id="arenaCanvas"></canvas>
-      </div>
+  <main class="main-layout">
+    <section class="arena">
+      <canvas id="arenaCanvas"></canvas>
     </section>
 
-    <!-- RIGHT: Editor -->
-    <aside class="editor" id="editor">
-      <div class="editor-header">
-        <h2>Editor</h2>
-        <button id="addBallBtn">+ Add Ball</button>
+    <section class="editor">
+      <h2>Editor</h2>
+      <div class="editor-controls">
+        <button id="addBallBtn">Add Ball</button>
+        <button id="startGameBtn">Start Game</button>
+        <button id="stopGameBtn">Stop Game</button>
       </div>
 
-      <div class="ball-list" id="ballList">
-        <!-- Ball entries appended here -->
-      </div>
-
-      <div class="editor-footer">
-        <p>Drag cards to reorder (prototype)</p>
-      </div>
-    </aside>
+      <ul id="ballList" class="ball-list"></ul>
+    </section>
   </main>
 
-  <!-- Full-screen Customiser Modal -->
-  <div id="customModal" class="modal hidden">
-    <div class="modal-content">
-      <div class="modal-top">
-        <h3 id="modalTitle">Customize Ball</h3>
-        <button id="closeModal">✕</button>
+  <!-- Customiser Panel -->
+  <div id="customiserPanel" class="customiser hidden">
+    <div class="customiser-header">
+      <h2 id="customiserTitle">Customise Ball</h2>
+      <button id="closeCustomiser">✕</button>
+    </div>
+
+    <nav class="customiser-tabs">
+      <button class="customiser-tab active" data-tab="stats">Stats</button>
+      <button class="customiser-tab" data-tab="weapons">Weapons</button>
+      <button class="customiser-tab" data-tab="customisation">Customisation</button>
+    </nav>
+
+    <div id="stats" class="customiser-content active">
+      <label>HP: <input type="number" min="1" value="100" class="stat-input" data-stat="hp"></label>
+      <label>Speed: <input type="number" min="1" value="5" class="stat-input" data-stat="speed"></label>
+      <label>Defense Chance (%): <input type="number" min="0" max="100" value="10" class="stat-input" data-stat="defense"></label>
+    </div>
+
+    <div id="weapons" class="customiser-content">
+      <div class="weapon-gallery">
+        <h3>Melee</h3>
+        <div class="weapon-grid">
+          <img src="https://png.pngtree.com/png-clipart/20250110/original/pngtree-cartoon-sword-with-intricate-hilt-design-png-image_19840812.png" alt="Basic Sword" class="weapon unlocked" data-weapon="sword">
+          <img src="https://wallpapers.com/images/hd/cartoon-axe-illustration-wurke62yv8ducs53-2.jpg" alt="Basic Axe" class="weapon unlocked" data-weapon="axe">
+        </div>
+        <h3>Ranged</h3>
+        <div class="weapon-grid">
+          <img src="https://static.vecteezy.com/system/resources/thumbnails/017/051/557/small/cartoon-cupid-s-bow-valentine-s-day-love-symbols-for-gifts-cards-posters-png.png" alt="Basic Bow" class="weapon unlocked" data-weapon="bow">
+          <div class="weapon locked"></div>
+        </div>
       </div>
-
-      <div class="modal-tabs" id="modalTabs">
-        <button class="tab active" data-tab="statsTab">Stats</button>
-        <button class="tab" data-tab="weaponsTab">Weapons</button>
-        <button class="tab" data-tab="customTab">Customisation</button>
-        <button class="tab" data-tab="otherTab">Other</button>
+      <div class="weapon-stats">
+        <label>Fire Rate: <input type="number" min="0.1" max="5" step="0.1" value="1"></label>
+        <label>Projectile Speed: <input type="number" min="1" max="20" step="1" value="10"></label>
+        <label>Projectile Damage: <input type="number" min="1" value="10"></label>
+        <label>Spin Speed: <input type="number" min="0" max="10" step="0.1" value="2"></label>
+        <label>Tracking Effectiveness: <input type="number" min="0" max="100" value="0"></label>
       </div>
+    </div>
 
-      <div class="modal-body">
-        <section id="statsTab" class="tab-pane active">
-          <label>Health: <input type="number" id="statHP" value="100"></label>
-          <label>Speed: <input type="number" id="statSpeed" value="2" step="0.1"></label>
-          <label>Defense Chance (%): <input type="number" id="statDef" value="0" min="0" max="100"></label>
-        </section>
-
-        <section id="weaponsTab" class="tab-pane">
-          <div class="weapons-left">
-            <canvas id="weaponPreview" width="200" height="200"></canvas>
-            <div class="weapon-stats">
-              <label>Fire Rate: <input id="wpFireRate" type="number" value="1" step="0.1"></label>
-              <label>Projectile Speed: <input id="wpProjSpeed" type="number" value="4" step="0.1"></label>
-              <label>Spin Speed: <input id="wpSpin" type="number" value="1" step="0.1"></label>
-              <label>Projectile Damage: <input id="wpDamage" type="number" value="10"></label>
-              <label>Tracking (%): <input id="wpTrack" type="number" value="0" min="0" max="100"></label>
-            </div>
-          </div>
-
-          <div class="weapons-right">
-            <h4>Melee</h4>
-            <div id="meleeGallery" class="weapon-gallery"></div>
-            <h4>Ranged</h4>
-            <div id="rangedGallery" class="weapon-gallery"></div>
-          </div>
-        </section>
-
-        <section id="customTab" class="tab-pane">
-          <div class="custom-grid">
-            <h4>Ball Images / Colors</h4>
-            <div id="colorGallery" class="color-gallery"></div>
-          </div>
-        </section>
-
-        <section id="otherTab" class="tab-pane">
-          <p>Trail, Death, Hats, Sounds — locked initially.</p>
-          <ul>
-            <li>Trail: Locked</li>
-            <li>Death Effect: Locked</li>
-            <li>Hats: Locked</li>
-            <li>Sounds: Locked</li>
-          </ul>
-        </section>
-      </div>
-
-      <div class="modal-actions">
-        <button id="saveCustom">Save</button>
-        <button id="cancelCustom">Cancel</button>
+    <div id="customisation" class="customiser-content">
+      <h3>Ball Color</h3>
+      <div class="color-grid">
+        <div class="color" style="background:#e74c3c" data-color="#e74c3c"></div>
+        <div class="color" style="background:#3498db" data-color="#3498db"></div>
+        <div class="color" style="background:#2ecc71" data-color="#2ecc71"></div>
+        <div class="color" style="background:#f1c40f" data-color="#f1c40f"></div>
+        <div class="color" style="background:#9b59b6" data-color="#9b59b6"></div>
+        <div class="color" style="background:#1abc9c" data-color="#1abc9c"></div>
+        <div class="color" style="background:#e67e22" data-color="#e67e22"></div>
+        <div class="color" style="background:#ecf0f1" data-color="#ecf0f1"></div>
+        <div class="color" style="background:#34495e" data-color="#34495e"></div>
+        <div class="color" style="background:#c0392b" data-color="#c0392b"></div>
       </div>
     </div>
   </div>
