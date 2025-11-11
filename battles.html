@@ -1,77 +1,113 @@
 <!DOCTYPE html>
-<div class="modal-content">
-<div class="modal-top">
-<h3 id="modalTitle">Customize Ball</h3>
-<button id="closeModal">✕</button>
-</div>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>BrawlSpheres — Battles</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="back-btn" href="https://endercivil.github.com">← Back to Menu</a>
+    <h1>BrawlSpheres — Battles (Editor)</h1>
+  </header>
 
+  <main class="layout">
+    <!-- LEFT: Arena -->
+    <section class="arena-wrap">
+      <div class="arena-header">
+        <button id="startBtn">Start Game</button>
+        <button id="stopBtn" disabled>Stop Game</button>
+      </div>
+      <div class="arena">
+        <canvas id="arenaCanvas"></canvas>
+      </div>
+    </section>
 
-<div class="modal-tabs" id="modalTabs">
-<button class="tab active" data-tab="statsTab">Stats</button>
-<button class="tab" data-tab="weaponsTab">Weapons</button>
-<button class="tab" data-tab="customTab">Customisation</button>
-<button class="tab" data-tab="otherTab">Other</button>
-</div>
+    <!-- RIGHT: Editor -->
+    <aside class="editor" id="editor">
+      <div class="editor-header">
+        <h2>Editor</h2>
+        <button id="addBallBtn">+ Add Ball</button>
+      </div>
 
+      <div class="ball-list" id="ballList">
+        <!-- Ball entries appended here -->
+      </div>
 
-<div class="modal-body">
-<section id="statsTab" class="tab-pane active">
-<label>Health: <input type="number" id="statHP" value="100"></label>
-<label>Speed: <input type="number" id="statSpeed" value="2" step="0.1"></label>
-<label>Defense Chance (%): <input type="number" id="statDef" value="0" min="0" max="100"></label>
-</section>
+      <div class="editor-footer">
+        <p>Drag cards to reorder (prototype)</p>
+      </div>
+    </aside>
+  </main>
 
+  <!-- Full-screen Customiser Modal -->
+  <div id="customModal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-top">
+        <h3 id="modalTitle">Customize Ball</h3>
+        <button id="closeModal">✕</button>
+      </div>
 
-<section id="weaponsTab" class="tab-pane">
-<div class="weapons-left">
-<canvas id="weaponPreview" width="200" height="200"></canvas>
-<div class="weapon-stats">
-<label>Fire Rate: <input id="wpFireRate" type="number" value="1" step="0.1"></label>
-<label>Projectile Speed: <input id="wpProjSpeed" type="number" value="4" step="0.1"></label>
-<label>Spin Speed: <input id="wpSpin" type="number" value="1" step="0.1"></label>
-<label>Projectile Damage: <input id="wpDamage" type="number" value="10"></label>
-<label>Tracking (%): <input id="wpTrack" type="number" value="0" min="0" max="100"></label>
-</div>
-</div>
+      <div class="modal-tabs" id="modalTabs">
+        <button class="tab active" data-tab="statsTab">Stats</button>
+        <button class="tab" data-tab="weaponsTab">Weapons</button>
+        <button class="tab" data-tab="customTab">Customisation</button>
+        <button class="tab" data-tab="otherTab">Other</button>
+      </div>
 
+      <div class="modal-body">
+        <section id="statsTab" class="tab-pane active">
+          <label>Health: <input type="number" id="statHP" value="100"></label>
+          <label>Speed: <input type="number" id="statSpeed" value="2" step="0.1"></label>
+          <label>Defense Chance (%): <input type="number" id="statDef" value="0" min="0" max="100"></label>
+        </section>
 
-<div class="weapons-right">
-<h4>Melee</h4>
-<div id="meleeGallery" class="weapon-gallery"></div>
-<h4>Ranged</h4>
-<div id="rangedGallery" class="weapon-gallery"></div>
-</div>
-</section>
+        <section id="weaponsTab" class="tab-pane">
+          <div class="weapons-left">
+            <canvas id="weaponPreview" width="200" height="200"></canvas>
+            <div class="weapon-stats">
+              <label>Fire Rate: <input id="wpFireRate" type="number" value="1" step="0.1"></label>
+              <label>Projectile Speed: <input id="wpProjSpeed" type="number" value="4" step="0.1"></label>
+              <label>Spin Speed: <input id="wpSpin" type="number" value="1" step="0.1"></label>
+              <label>Projectile Damage: <input id="wpDamage" type="number" value="10"></label>
+              <label>Tracking (%): <input id="wpTrack" type="number" value="0" min="0" max="100"></label>
+            </div>
+          </div>
 
+          <div class="weapons-right">
+            <h4>Melee</h4>
+            <div id="meleeGallery" class="weapon-gallery"></div>
+            <h4>Ranged</h4>
+            <div id="rangedGallery" class="weapon-gallery"></div>
+          </div>
+        </section>
 
-<section id="customTab" class="tab-pane">
-<div class="custom-grid">
-<h4>Ball Images / Colors</h4>
-<div id="colorGallery" class="color-gallery"></div>
-</div>
-</section>
+        <section id="customTab" class="tab-pane">
+          <div class="custom-grid">
+            <h4>Ball Images / Colors</h4>
+            <div id="colorGallery" class="color-gallery"></div>
+          </div>
+        </section>
 
+        <section id="otherTab" class="tab-pane">
+          <p>Trail, Death, Hats, Sounds — locked initially.</p>
+          <ul>
+            <li>Trail: Locked</li>
+            <li>Death Effect: Locked</li>
+            <li>Hats: Locked</li>
+            <li>Sounds: Locked</li>
+          </ul>
+        </section>
+      </div>
 
-<section id="otherTab" class="tab-pane">
-<p>Trail, Death, Hats, Sounds — locked initially.</p>
-<ul>
-<li>Trail: Locked</li>
-<li>Death Effect: Locked</li>
-<li>Hats: Locked</li>
-<li>Sounds: Locked</li>
-</ul>
-</section>
-</div>
+      <div class="modal-actions">
+        <button id="saveCustom">Save</button>
+        <button id="cancelCustom">Cancel</button>
+      </div>
+    </div>
+  </div>
 
-
-<div class="modal-actions">
-<button id="saveCustom">Save</button>
-<button id="cancelCustom">Cancel</button>
-</div>
-</div>
-</div>
-
-
-<script src="Battles.js"></script>
+  <script src="Battles.js"></script>
 </body>
 </html>
