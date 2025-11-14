@@ -34,13 +34,14 @@ html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Segoe 
 /* weapon */
 .weapon-rect{position:absolute;left:50%;transform-origin:50% 100%;pointer-events:none}
 /* Editor */
-#editor{width:var(--editor-width);max-width:100%;display:flex;flex-direction:column;background:#fff;border-radius:10px;padding:12px;box-shadow:0 6px 20px rgba(0,0,0,0.06);box-sizing:border-box;position:relative;min-height:640px;flex-shrink:0;}
+#editor{width:var(--editor-width);max-width:100%;display:flex;flex-direction:column;background:#fff;
+border-radius:10px;padding:12px;box-shadow:0 6px 20px rgba(0,0,0,0.06);box-sizing:border-box;position:relative;min-height: auto; flex-shrink:0;}
 /* overlay that blocks editor inputs during game - lower z-index than startStop (so startStop remains clickable) */
 #editorOverlay{position:absolute;inset:0;background:rgba(128,128,128,0.45);border-radius:10px;display:none;z-index:60;pointer-events:auto}
 .tabs{display:flex;gap:6px;margin-bottom:10px;overflow:auto}
 .tab{flex:1 0 auto;padding:8px 10px;text-align:center;border-bottom:3px solid transparent;cursor:pointer;user-select:none;font-weight:600;border-radius:6px}
 .tab.active{border-bottom-color:#000;background:rgba(0,0,0,0.03)}
-.subWrap{flex:1 1 auto;overflow:auto;padding-right:6px}
+.subWrap{flex:0 0 auto;overflow:auto;padding-right:6px; max-height: 400px;}
 .subCat{display:none;margin-bottom:14px}
 .subCat.active{display:block}
 h4{margin:6px 0;font-size:0.95rem;border-bottom:1px solid #ddd;padding-bottom:6px}
