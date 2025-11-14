@@ -275,14 +275,23 @@ function applyLayout(){
 /* ---- Tabs wiring ---- */
 tabs.forEach(t=>{
   t.addEventListener('click', ()=>{
+    // activate tab
     tabs.forEach(x=>x.classList.remove('active'));
     t.classList.add('active');
-    subCats.forEach(s=>s.classList.remove('active'));
-    const id = t.dataset.target;
-    const el = document.getElementById(id);
-    if(el){ el.classList.add('active'); el.style.display='block'; }
+
+    // show correct subCat
+    subCats.forEach(s=>{
+      if(s.id === t.dataset.target){
+        s.classList.add('active');
+        s.style.display = 'block';
+      } else {
+        s.classList.remove('active');
+        s.style.display = 'none';
+      }
+    });
   });
 });
+
 subCats.forEach(sc=>sc.style.display='none');
 document.getElementById('spheres').style.display='block';
 document.getElementById('spheres').classList.add('active');
