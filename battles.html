@@ -1,92 +1,714 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BrawlSpheres — Battles</title>
-  <link rel="stylesheet" href="battlesstyles.css" />
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>BrawlSpheres v0.6</title>
+<style>
+:root{
+  --editor-width:340px;
+  --gap:18px;
+  --bg1:rgba(255,0,150,0.12);
+  --bg2:rgba(0,150,255,0.12);
+  --btn-bg:#fff;
+  --btn-border:#000;
+  --btn-shadow: 0 4px 0 rgba(0,0,0,0.25);
+}
+html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial;
+  background:
+    radial-gradient(circle at 20% 30%, var(--bg1), #fff 30%),
+    radial-gradient(circle at 70% 70%, var(--bg2), #fff 30%);
+  background-size:200% 200%; animation:bgMove 16s linear infinite; box-sizing:border-box;}
+@keyframes bgMove{0%{background-position:0% 0%,100% 100%}50%{background-position:100% 0%,0% 100%}100%{background-position:0% 100%,100% 0%}}
+/* Layout */
+.root{display:flex;gap:var(--gap);padding:var(--gap);height:100vh;align-items:center;justify-content:center;flex-wrap:nowrap;}
+.root.vertical{flex-direction:column;padding:12px;align-items:stretch;}
+/* Arena */
+#arenaWrap{flex:1 1 auto;display:flex;align-items:center;justify-content:center;min-width:220px;min-height:220px;}
+#arena{position:relative;background:#fff;border:3px solid #000;box-shadow:0 6px 20px rgba(0,0,0,0.08);overflow:hidden;touch-action:none;user-select:none;}
+#stormCanvas{position:absolute;left:0;top:0;z-index:1;pointer-events:none}
+/* Ball DOM */
+.ball-el{position:absolute;z-index:3;display:flex;align-items:center;justify-content:center;font-weight:700;box-sizing:border-box}
+.ball-el .hp-num{position:absolute;font-size:11px;top:6px;left:50%;transform:translateX(-50%);pointer-events:none;z-index:6}
+.ball-el.dead{filter:grayscale(90%);opacity:0.6}
+/* weapon */
+.weapon-rect{position:absolute;left:50%;transform-origin:50% 100%;pointer-events:none}
+/* Editor */
+#editor{width:var(--editor-width);max-width:100%;display:flex;flex-direction:column;background:#fff;border-radius:10px;padding:12px;box-shadow:0 6px 20px rgba(0,0,0,0.06);box-sizing:border-box;position:relative;min-height:640px;flex-shrink:0;}
+/* overlay that blocks editor inputs during game - lower z-index than startStop (so startStop remains clickable) */
+#editorOverlay{position:absolute;inset:0;background:rgba(128,128,128,0.45);border-radius:10px;display:none;z-index:60;pointer-events:auto}
+.tabs{display:flex;gap:6px;margin-bottom:10px;overflow:auto}
+.tab{flex:1 0 auto;padding:8px 10px;text-align:center;border-bottom:3px solid transparent;cursor:pointer;user-select:none;font-weight:600;border-radius:6px}
+.tab.active{border-bottom-color:#000;background:rgba(0,0,0,0.03)}
+.subWrap{flex:1 1 auto;overflow:auto;padding-right:6px}
+.subCat{display:none;margin-bottom:14px}
+.subCat.active{display:block}
+h4{margin:6px 0;font-size:0.95rem;border-bottom:1px solid #ddd;padding-bottom:6px}
+.ball-list{max-height:365px;overflow:auto;padding:6px;border-radius:8px;border:1px solid #eee;background:#fbfbfb}
+.ball-row{display:flex;gap:8px;align-items:center;padding:8px;border-radius:8px;margin-bottom:6px;background:#fff;border:1px solid #eee}
+.ball-row.dead{background:#ffd6d6;border-color:#ff8a8a}
+.portrait{width:44px;height:44px;border-radius:50%;flex:0 0 44px;border:2px solid rgba(0,0,0,0.08);display:flex;align-items:center;justify-content:center}
+.ball-name{flex:1;font-weight:bold;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row-actions{display:flex;gap:6px;align-items:center}
+.action-btn{width:32px;height:32px;border-radius:6px;border:2px solid var(--btn-border);background:var(--btn-bg);box-shadow:var(--btn-shadow);cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700}
+.control{margin:8px 0;display:flex;flex-direction:column;gap:6px}
+label.setting-label{display:block;font-weight:700;margin-bottom:4px}
+input[type=number], select, input[type=color], input[type=text]{padding:8px 10px;border-radius:8px;border:1px solid #d0d0d0;font-size:0.95rem}
+.color-swatch{width:34px;height:34px;border-radius:50%;border:2px solid rgba(0,0,0,0.12);box-shadow:0 2px 6px rgba(0,0,0,0.06);display:inline-block;cursor:pointer}
+.color-row{display:flex;gap:10px;align-items:center}
+.editorFooter{margin-top:12px;display:flex;align-items:center;justify-content:center}
+.editorFooterInner{width:100%;position:sticky;bottom:12px;display:flex;gap:8px;z-index:70} /* startStop above overlay */
+.btn{flex:1;padding:12px 14px;border-radius:10px;background:var(--btn-bg);color:#000;border:2px solid var(--btn-border);font-weight:700;cursor:pointer;box-shadow:var(--btn-shadow)}
+.btn.secondary{background:#fff;color:#000;border:2px solid var(--btn-border)}
+.btn:disabled{opacity:0.5;cursor:default;box-shadow:none}
+/* customiser modal */
+#customiserModal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);z-index:120}
+#customiser{width:820px;max-width:95%;height:640px;background:#fff;border-radius:12px;padding:12px;display:flex;gap:12px;box-shadow:0 12px 40px rgba(0,0,0,0.4)}
+.custom-left{width:230px;display:flex;flex-direction:column;align-items:center;gap:12px}
+.preview-ball{width:180px;height:180px;border-radius:50%;border:3px solid #000;display:flex;align-items:center;justify-content:center;font-weight:800}
+.custom-right{flex:1;display:flex;flex-direction:column}
+.custom-tabs{display:flex;gap:8px;margin-bottom:8px}
+.custom-tab{flex:1;padding:8px;text-align:center;cursor:pointer;border-bottom:3px solid transparent;font-weight:700}
+.custom-tab.active{border-bottom-color:#000;background:rgba(0,0,0,0.03)}
+.custom-body{flex:1;overflow:auto;padding:8px}
+.weapon-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:8px}
+.weapon-slot{width:48px;height:48px;border-radius:8px;border:2px solid #eee;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.weapon-slot.active{border-color:#000}
+.color-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:8px;margin-top:8px}
+.color-cell{width:34px;height:34px;border-radius:6px;border:1px solid #ccc;cursor:pointer}
+.color-cell.locked{background:#000;opacity:0.6;cursor:not-allowed}
+.custom-actions{display:flex;gap:12px;justify-content:center;margin-top:8px}
+.custom-actions button{padding:10px 16px;border-radius:8px;border:2px solid var(--btn-border);background:var(--btn-bg);box-shadow:var(--btn-shadow);cursor:pointer}
+.small-muted{font-size:12px;color:#666}
+/* responsive */
+@media (max-width:900px){
+  #customiser{width:92%;height:86%}
+  .preview-ball{width:120px;height:120px}
+}
+</style>
 </head>
 <body>
-  <header class="top-bar">
-    <button id="backBtn" class="back-btn">← Back</button>
-    <h1>BrawlSpheres: Battles</h1>
-  </header>
 
-  <main class="main-layout">
-    <section class="arena">
-      <canvas id="arenaCanvas"></canvas>
-    </section>
+<div id="page" class="root">
+  <div id="arenaWrap"><div id="arena" role="application" aria-label="Arena"></div></div>
 
-    <section class="editor">
-      <h2>Editor</h2>
-      <div class="editor-controls">
-        <button id="addBallBtn">Add Ball</button>
-        <button id="startGameBtn">Start Game</button>
-        <button id="stopGameBtn">Stop Game</button>
-      </div>
+  <div id="editor" style="position:relative;">
+    <div id="editorOverlay" style="display:none;"></div>
 
-      <ul id="ballList" class="ball-list"></ul>
-    </section>
-  </main>
-
-  <!-- Customiser Panel -->
-  <div id="customiserPanel" class="customiser hidden">
-    <div class="customiser-header">
-      <h2 id="customiserTitle">Customise Ball</h2>
-      <button id="closeCustomiser">✕</button>
+    <div class="tabs" id="tabs">
+      <div class="tab active" data-target="spheres">Spheres</div>
+      <div class="tab" data-target="arena">Arena</div>
+      <div class="tab" data-target="misc">Misc</div>
     </div>
 
-    <nav class="customiser-tabs">
-      <button class="customiser-tab active" data-tab="stats">Stats</button>
-      <button class="customiser-tab" data-tab="weapons">Weapons</button>
-      <button class="customiser-tab" data-tab="customisation">Customisation</button>
-    </nav>
+    <div class="subWrap">
+      <div class="subCat active" id="spheres">
+        <h4>Spheres</h4>
 
-    <div id="stats" class="customiser-content active">
-      <label>HP: <input type="number" min="1" value="100" class="stat-input" data-stat="hp"></label>
-      <label>Speed: <input type="number" min="1" value="5" class="stat-input" data-stat="speed"></label>
-      <label>Defense Chance (%): <input type="number" min="0" max="100" value="10" class="stat-input" data-stat="defense"></label>
-    </div>
-
-    <div id="weapons" class="customiser-content">
-      <div class="weapon-gallery">
-        <h3>Melee</h3>
-        <div class="weapon-grid">
-          <img src="https://png.pngtree.com/png-clipart/20250110/original/pngtree-cartoon-sword-with-intricate-hilt-design-png-image_19840812.png" alt="Basic Sword" class="weapon unlocked" data-weapon="sword">
-          <img src="https://wallpapers.com/images/hd/cartoon-axe-illustration-wurke62yv8ducs53-2.jpg" alt="Basic Axe" class="weapon unlocked" data-weapon="axe">
+        <div class="control">
+          <label class="setting-label">Ball List</label><br>
+          <div class="ball-list" id="ballList"></div>
         </div>
-        <h3>Ranged</h3>
-        <div class="weapon-grid">
-          <img src="https://static.vecteezy.com/system/resources/thumbnails/017/051/557/small/cartoon-cupid-s-bow-valentine-s-day-love-symbols-for-gifts-cards-posters-png.png" alt="Basic Bow" class="weapon unlocked" data-weapon="bow">
-          <div class="weapon locked"></div>
+
+        <div style="margin-top:8px;"><button id="addBall" class="btn secondary">➕ Add Ball</button></div>
+      </div>
+
+      <div class="subCat" id="arena">
+        <h4>Storm</h4>
+        <div class="control">
+          <label class="setting-label">Accent</label><br>
+          <div class="color-row"><span class="small-muted"> </span><span class="color-swatch" id="stormSwatch" title="Change storm color"></span><input id="stormColor" type="color" value="#ff3b3b" style="display:none"></div><br>
+
+          <label class="setting-label">Storm DPS</label><br>
+          <input id="stormDPS" type="number" min="0" value="5"><br>
+
+          <label class="setting-label">Shrink Time (s)</label><br>
+          <input id="stormShrink" type="number" min="1" value="30"><br>
+
+          <label class="setting-label">Start Radius (px)</label><br>
+          <input id="stormStart" type="number" min="0" value="150"><br>
+
+          <div class="small-muted">Anything <em>outside</em> the circle receives damage each frame.</div>
+        </div>
+
+        <h4>Hazard Walls</h4>
+        <div class="control">
+          <label class="setting-label">Wall Damage</label><br>
+          <input id="wallDamage" type="number" value="10" min="0"><br>
+        </div>
+
+        <h4>Gravity</h4>
+        <div class="control">
+          <label class="setting-label">Gravity (px/frame^2)</label><br>
+          <input id="gravity" type="number" step="0.05" value="0"><br>
+        </div>
+
+        <h4>Arena</h4>
+        <div class="control">
+          <label class="setting-label">Border color</label><br>
+          <div class="color-row"><span class="color-swatch" id="borderSwatch" title="Change border color"></span><input id="borderColor" type="color" value="#000000" style="display:none"></div><br>
         </div>
       </div>
-      <div class="weapon-stats">
-        <label>Fire Rate: <input type="number" min="0.1" max="5" step="0.1" value="1"></label>
-        <label>Projectile Speed: <input type="number" min="1" max="20" step="1" value="10"></label>
-        <label>Projectile Damage: <input type="number" min="1" value="10"></label>
-        <label>Spin Speed: <input type="number" min="0" max="10" step="0.1" value="2"></label>
-        <label>Tracking Effectiveness: <input type="number" min="0" max="100" value="0"></label>
+
+      <div class="subCat" id="misc">
+        <h4>Miscellaneous</h4>
+        <div class="control">
+          <label class="setting-label">Ball Health Display</label><br>
+          <select id="healthDisplay">
+            <option value="onBall">Health On Ball</option>
+            <option value="bar">Bar (above)</option>
+            <option value="barNumber">Bar + Number</option>
+          </select><br>
+        </div>
       </div>
     </div>
 
-    <div id="customisation" class="customiser-content">
-      <h3>Ball Color</h3>
-      <div class="color-grid">
-        <div class="color" style="background:#e74c3c" data-color="#e74c3c"></div>
-        <div class="color" style="background:#3498db" data-color="#3498db"></div>
-        <div class="color" style="background:#2ecc71" data-color="#2ecc71"></div>
-        <div class="color" style="background:#f1c40f" data-color="#f1c40f"></div>
-        <div class="color" style="background:#9b59b6" data-color="#9b59b6"></div>
-        <div class="color" style="background:#1abc9c" data-color="#1abc9c"></div>
-        <div class="color" style="background:#e67e22" data-color="#e67e22"></div>
-        <div class="color" style="background:#ecf0f1" data-color="#ecf0f1"></div>
-        <div class="color" style="background:#34495e" data-color="#34495e"></div>
-        <div class="color" style="background:#c0392b" data-color="#c0392b"></div>
+    <div class="editorFooter" aria-hidden="false">
+      <div class="editorFooterInner">
+        <button id="clearBtn" class="btn secondary" style="flex:0 0 120px">Clear</button>
+        <button id="startStop" class="btn" style="flex:0 0 180px;z-index:75;">▶️ Start Game</button>
       </div>
     </div>
   </div>
+</div>
 
-  <script src="battles.js"></script>
+<!-- Customiser modal -->
+<div id="customiserModal" role="dialog" aria-modal="true">
+  <div id="customiser">
+    <div class="custom-left">
+      <div class="preview-ball" id="customPreview"> </div>
+      <div class="small-muted">Preview</div>
+    </div>
+    <div class="custom-right">
+      <div class="custom-tabs">
+        <div class="custom-tab active" data-tab="stats">Stats</div>
+        <div class="custom-tab" data-tab="weapon">Weapon</div>
+        <div class="custom-tab" data-tab="custom">Customisation</div>
+      </div>
+      <div class="custom-body" id="customBody"></div>
+      <div class="custom-actions">
+        <button id="cancelCustom" class="btn secondary">Cancel</button>
+        <button id="confirmCustom" class="btn">Confirm</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---- DOM refs ---- */
+const page = document.getElementById('page');
+const arena = document.getElementById('arena');
+const editor = document.getElementById('editor');
+const editorOverlay = document.getElementById('editorOverlay');
+const ballList = document.getElementById('ballList');
+const addBallBtn = document.getElementById('addBall');
+const startStopBtn = document.getElementById('startStop');
+const clearBtn = document.getElementById('clearBtn');
+const tabs = document.querySelectorAll('.tab');
+const subCats = document.querySelectorAll('.subCat');
+
+const stormColorInput = document.getElementById('stormColor');
+const stormSwatch = document.getElementById('stormSwatch');
+const stormDPSInput = document.getElementById('stormDPS');
+const stormShrinkInput = document.getElementById('stormShrink');
+const stormStartInput = document.getElementById('stormStart');
+
+const wallDamageInput = document.getElementById('wallDamage');
+const gravityInput = document.getElementById('gravity');
+const borderColorInput = document.getElementById('borderColor');
+const borderSwatch = document.getElementById('borderSwatch');
+const healthDisplaySelect = document.getElementById('healthDisplay');
+
+const customiserModal = document.getElementById('customiserModal');
+const customBody = document.getElementById('customBody');
+const customPreview = document.getElementById('customPreview');
+const customTabs = document.querySelectorAll('.custom-tab');
+const cancelCustom = document.getElementById('cancelCustom');
+const confirmCustom = document.getElementById('confirmCustom');
+
+/* ---- State ---- */
+let balls = [];
+let ballCounter = 0;
+let animId = null;
+let gameRunning = false;
+let stormCanvas = null, stormCtx = null;
+let stormRadius = parseFloat(stormStartInput.value) || 150;
+let stormStartTime = 0;
+let editingIndex = null;
+let editingCopy = null;
+
+/* ---- Helpers & layout ---- */
+function ensureCanvas(){
+  if(!stormCanvas){
+    stormCanvas = document.createElement('canvas');
+    stormCanvas.id = 'stormCanvas';
+    arena.appendChild(stormCanvas);
+    stormCtx = stormCanvas.getContext('2d');
+  }
+  stormCanvas.width = arena.clientWidth;
+  stormCanvas.height = arena.clientHeight;
+  stormCanvas.style.width = arena.clientWidth + 'px';
+  stormCanvas.style.height = arena.clientHeight + 'px';
+}
+function applyLayout(){
+  const gap = 18;
+  const editorWidth = Math.min(340, Math.max(300, editor.offsetWidth));
+  const viewportW = window.innerWidth;
+  const viewportH = window.innerHeight;
+  const preferredArena = Math.floor(viewportH * 0.6);
+  const totalGaps = gap * 2;
+  const availableWidthForArena = Math.max(200, viewportW - editorWidth - totalGaps);
+  if(preferredArena <= availableWidthForArena){
+    page.classList.remove('vertical');
+    const size = Math.min(preferredArena, availableWidthForArena, 900);
+    arena.style.width = arena.style.height = size + 'px';
+  } else {
+    page.classList.add('vertical');
+    const maxArenaW = Math.max(220, viewportW - totalGaps);
+    const size = Math.min(preferredArena, maxArenaW, 900);
+    arena.style.width = arena.style.height = size + 'px';
+  }
+  ensureCanvas();
+  arena.style.borderColor = borderColorInput.value;
+}
+
+/* ---- Tabs wiring ---- */
+tabs.forEach(t=>{
+  t.addEventListener('click', ()=>{
+    tabs.forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    subCats.forEach(s=>s.classList.remove('active'));
+    const id = t.dataset.target;
+    const el = document.getElementById(id);
+    if(el){ el.classList.add('active'); el.style.display='block'; }
+  });
+});
+subCats.forEach(sc=>sc.style.display='none');
+document.getElementById('spheres').style.display='block';
+document.getElementById('spheres').classList.add('active');
+
+/* ---- Swatches ---- */
+function setupSwatch(swatch,input){
+  swatch.style.background = input.value;
+  swatch.addEventListener('click', ()=> input.click() );
+  input.addEventListener('input', ()=> {
+    swatch.style.background = input.value;
+    if(input.id === 'borderColor') arena.style.borderColor = input.value;
+  });
+}
+setupSwatch(stormSwatch, stormColorInput);
+setupSwatch(borderSwatch, borderColorInput);
+
+/* ---- Ball class ---- */
+function clampBallsToArena(){
+  balls.forEach(b=>{
+    b.x = Math.min(Math.max(0,b.x), arena.clientWidth - b.size);
+    b.y = Math.min(Math.max(0,b.y), arena.clientHeight - b.size);
+    b.updateDOM();
+  });
+}
+
+class Ball {
+  constructor(name){
+    this.name = name;
+    this.color = `hsl(${Math.random()*360} 70% 50%)`;
+    this.size = 38;
+    this.hp = 100;
+    this.vx = 0; this.vy = 0;
+    this.dead = false;
+    this.weapon = { type: 'sword', damage: 10, spin: 4, angle: Math.random()*360 };
+    const pos = this.getSafePos();
+    this.x = pos.x; this.y = pos.y;
+
+    this.el = document.createElement('div');
+    this.el.className = 'ball-el';
+    this.el.style.width = this.el.style.height = this.size + 'px';
+    this.el.style.borderRadius = '50%';
+    this.el.style.background = this.color;
+    this.el.style.left = this.x + 'px';
+    this.el.style.top = this.y + 'px';
+    this.el.style.fontSize = '12px';
+    this.el.style.lineHeight = this.size + 'px';
+    this.el.style.boxSizing = 'border-box';
+
+    this.hpNum = document.createElement('div');
+    this.hpNum.className = 'hp-num';
+    this.hpNum.style.display = 'block'; // default show onBall
+    this.hpNum.textContent = Math.round(this.hp);
+    this.el.appendChild(this.hpNum);
+
+    // weapon rectangle (black)
+    this.weaponEl = document.createElement('div');
+    this.weaponEl.className = 'weapon-rect';
+    this.weaponEl.style.width = '8px';
+    this.weaponEl.style.height = (this.size + 12) + 'px';
+    this.weaponEl.style.background = '#000';
+    this.weaponEl.style.left = '50%';
+    this.weaponEl.style.top = -(this.size + 12) + 'px';
+    this.weaponEl.style.transform = 'translateX(-50%)';
+    this.el.appendChild(this.weaponEl);
+
+    arena.appendChild(this.el);
+  }
+
+  getSafePos(){
+    let tries=0;
+    while(true){
+      const x = Math.random()*(arena.clientWidth - this.size);
+      const y = Math.random()*(arena.clientHeight - this.size);
+      let ok = !balls.some(b=>{
+        const dx = (b.x + b.size/2) - (x + this.size/2);
+        const dy = (b.y + b.size/2) - (y + this.size/2);
+        return Math.hypot(dx,dy) < (b.size + this.size) * 0.9;
+      });
+      if(ok || ++tries>400) return {x,y};
+    }
+  }
+
+  launchRandom(){
+    const speed = (Math.random()*3)+2;
+    const angle = Math.random()*Math.PI*2;
+    this.vx = Math.cos(angle) * speed;
+    this.vy = Math.sin(angle) * speed;
+  }
+
+  applyWallCollision(){
+    const w = arena.clientWidth, h = arena.clientHeight;
+    if(this.x <= 0){ this.x = 0; this.vx *= -1; this.hp -= parseFloat(wallDamageInput.value)||0; }
+    if(this.x + this.size >= w){ this.x = w - this.size; this.vx *= -1; this.hp -= parseFloat(wallDamageInput.value)||0; }
+    if(this.y <= 0){ this.y = 0; this.vy *= -1; this.hp -= parseFloat(wallDamageInput.value)||0; }
+    if(this.y + this.size >= h){ this.y = h - this.size; this.vy *= -1; this.hp -= parseFloat(wallDamageInput.value)||0; }
+  }
+
+  step(){
+    if(this.dead) return; // dead do not move or damage others
+    this.vy += parseFloat(gravityInput.value)||0;
+    this.x += this.vx;
+    this.y += this.vy;
+    this.applyWallCollision();
+
+    // weapon spin (angle increments)
+    this.weapon.angle += this.weapon.spin;
+    this.weaponEl.style.transform = `translateX(-50%) rotate(${this.weapon.angle}deg)`;
+    this.updateDOM();
+    // update hpNum
+    this.hpNum.textContent = Math.max(0, Math.round(this.hp));
+    if(this.hp <= 0 && !this.dead){
+      this.dead = true;
+      this.vx = 0; this.vy = 0;
+      this.el.classList.add('dead');
+      renderBallList();
+    }
+  }
+
+  updateDOM(){
+    this.el.style.left = this.x + 'px';
+    this.el.style.top = this.y + 'px';
+    // hp on ball shown by default
+    this.hpNum.style.display = (healthDisplaySelect.value === 'onBall') ? 'block' : 'none';
+  }
+
+  remove(){
+    if(this.el.parentElement) this.el.remove();
+  }
+}
+
+/* ---- Ball list UI ---- */
+function renderBallList(){
+  ballList.innerHTML = '';
+  balls.forEach((b,i)=>{
+    const row = document.createElement('div');
+    row.className = 'ball-row' + (b.dead ? ' dead' : '');
+    const portrait = document.createElement('div');
+    portrait.className = 'portrait';
+    portrait.style.background = b.color;
+    portrait.textContent = (b.name||'').split(' ')[1] || 'B';
+    const name = document.createElement('div');
+    name.className = 'ball-name';
+    name.textContent = b.name + (b.dead ? ' (dead)' : '');
+    const actions = document.createElement('div');
+    actions.className = 'row-actions';
+    const pencil = document.createElement('button');
+    pencil.className = 'action-btn';
+    pencil.title = 'Edit';
+    pencil.innerHTML = '✎';
+    pencil.onclick = ()=> openCustomiser(i);
+    const del = document.createElement('button');
+    del.className = 'action-btn';
+    del.title = 'Delete';
+    del.innerHTML = 'X';
+    del.onclick = ()=> { if(gameRunning) return; balls[i].remove(); balls.splice(i,1); renderBallList(); };
+    actions.appendChild(pencil); actions.appendChild(del);
+    row.appendChild(portrait); row.appendChild(name); row.appendChild(actions);
+    ballList.appendChild(row);
+  });
+}
+
+/* ---- Add / clear handlers ---- */
+addBallBtn.addEventListener('click', ()=>{
+  if(gameRunning) return;
+  ballCounter++;
+  const b = new Ball('Ball ' + ballCounter);
+  balls.push(b);
+  renderBallList();
+});
+clearBtn.addEventListener('click', ()=>{
+  if(gameRunning) return;
+  balls.forEach(b=>b.remove());
+  balls = []; ballCounter = 0;
+  renderBallList();
+});
+
+/* ---- Collision & physics ---- */
+function collideBalls(){
+  for(let i=0;i<balls.length;i++){
+    for(let j=i+1;j<balls.length;j++){
+      const A = balls[i], B = balls[j];
+      if(A.dead || B.dead) continue; // dead don't interact
+      const ax = A.x + A.size/2, ay = A.y + A.size/2;
+      const bx = B.x + B.size/2, by = B.y + B.size/2;
+      const dx = bx - ax, dy = by - ay;
+      const dist = Math.hypot(dx,dy);
+      const minDist = (A.size + B.size)/2;
+      if(dist > 0 && dist < minDist){
+        // separate
+        const overlap = (minDist - dist) / 2;
+        const nx = dx / dist, ny = dy / dist;
+        A.x -= nx * overlap; A.y -= ny * overlap;
+        B.x += nx * overlap; B.y += ny * overlap;
+
+        // exchange velocities along normal (simple)
+        const dvx = B.vx - A.vx;
+        const dvy = B.vy - A.vy;
+        const rel = dvx*nx + dvy*ny;
+        if(rel < 0){
+          const impulse = -rel * 0.9;
+          A.vx -= nx * impulse * 0.6; A.vy -= ny * impulse * 0.6;
+          B.vx += nx * impulse * 0.6; B.vy += ny * impulse * 0.6;
+        }
+
+        // weapon-tip clash (approx)
+        const AweaponTipX = ax + Math.cos((A.weapon.angle-90)*Math.PI/180) * (A.size/2 + 10);
+        const AweaponTipY = ay + Math.sin((A.weapon.angle-90)*Math.PI/180) * (A.size/2 + 10);
+        const BweaponTipX = bx + Math.cos((B.weapon.angle-90)*Math.PI/180) * (B.size/2 + 10);
+        const BweaponTipY = by + Math.sin((B.weapon.angle-90)*Math.PI/180) * (B.size/2 + 10);
+        const wx = BweaponTipX - AweaponTipX, wy = BweaponTipY - AweaponTipY;
+        const wdist = Math.hypot(wx,wy);
+        if(wdist < 14){
+          // weapon collision: deflect and do small damage to both
+          A.vx -= nx * 1.2; A.vy -= ny * 1.2;
+          B.vx += nx * 1.2; B.vy += ny * 1.2;
+          A.hp -= (B.weapon.damage || 5) * 0.2;
+          B.hp -= (A.weapon.damage || 5) * 0.2;
+        }
+      }
+    }
+  }
+}
+
+function physicsStep(){
+  collideBalls();
+  balls.forEach(b=> b.step());
+  // storm damage outside
+  const cx = arena.clientWidth/2, cy = arena.clientHeight/2;
+  const dps = parseFloat(stormDPSInput.value)||0;
+  balls.forEach(b=>{
+    if(b.dead) return;
+    const px = b.x + b.size/2, py = b.y + b.size/2;
+    const d = Math.hypot(px - cx, py - cy);
+    if(d > stormRadius){ b.hp -= dps * (1/60); }
+  });
+  // update DOM + list color changed handled in step()
+  balls.forEach(b=> b.updateDOM());
+}
+
+/* ---- Storm draw ---- */
+function renderStorm(){
+  ensureCanvas();
+  stormCtx.clearRect(0,0,stormCanvas.width,stormCanvas.height);
+  const w = stormCanvas.width, h = stormCanvas.height;
+  stormCtx.fillStyle = hexToRgba(stormColorInput.value, 0.35);
+  stormCtx.fillRect(0,0,w,h);
+  stormCtx.globalCompositeOperation = 'destination-out';
+  stormCtx.beginPath();
+  stormCtx.arc(w/2, h/2, Math.max(0, stormRadius), 0, Math.PI*2);
+  stormCtx.fill();
+  stormCtx.globalCompositeOperation = 'source-over';
+  stormCtx.beginPath();
+  stormCtx.lineWidth = 3;
+  stormCtx.strokeStyle = stormColorInput.value;
+  stormCtx.arc(w/2, h/2, Math.max(0, stormRadius), 0, Math.PI*2);
+  stormCtx.stroke();
+}
+
+/* ---- Main loop ---- */
+function loop(){
+  if(!gameRunning) return;
+  const elapsed = (Date.now() - stormStartTime) / 1000;
+  const shrinkSeconds = parseFloat(stormShrinkInput.value) || 30;
+  const startR = parseFloat(stormStartInput.value) || Math.min(arena.clientWidth, arena.clientHeight)/2;
+  stormRadius = Math.max(0, startR * (1 - (elapsed / shrinkSeconds)));
+  physicsStep();
+  renderStorm();
+  animId = requestAnimationFrame(loop);
+}
+
+/* ---- Start/Stop behavior ---- */
+startStopBtn.addEventListener('click', ()=>{
+  if(!gameRunning){
+    if(balls.length < 2){ alert('Add at least 2 balls to start the game'); return; }
+    gameRunning = true;
+    // launch balls
+    balls.forEach(b => { if(!b.dead) b.launchRandom(); });
+    stormStartTime = Date.now();
+    stormRadius = parseFloat(stormStartInput.value) || Math.min(arena.clientWidth, arena.clientHeight)/2;
+    startStopBtn.textContent = '⏹ Stop Game';
+    setEditorLocked(true);
+    loop();
+  } else {
+    gameRunning = false;
+    if(animId) cancelAnimationFrame(animId);
+    startStopBtn.textContent = '▶️ Start Game';
+    setEditorLocked(false);
+    if(stormCtx) stormCtx.clearRect(0,0,stormCanvas.width,stormCanvas.height);
+  }
+});
+
+/* ---- Editor lock but keep Start/Stop clickable ---- */
+function setEditorLocked(lock){
+  if(lock){
+    editorOverlay.style.display = 'block';
+    // disable all except startStop
+    Array.from(editor.querySelectorAll('input,select,button')).forEach(el=>{
+      if(el === startStopBtn) return;
+      el.disabled = true;
+      el.setAttribute('aria-disabled','true');
+    });
+    // ensure startStop is above overlay and clickable
+    startStopBtn.style.zIndex = 75;
+    startStopBtn.disabled = false;
+  } else {
+    editorOverlay.style.display = 'none';
+    Array.from(editor.querySelectorAll('input,select,button')).forEach(el=>{
+      el.disabled = false;
+      el.removeAttribute('aria-disabled');
+    });
+    startStopBtn.style.zIndex = '';
+  }
+}
+
+/* ---- Hex helper ---- */
+function hexToRgba(hex, alpha=1){
+  const h = hex.replace('#','');
+  const full = h.length === 3 ? h.split('').map(c=>c+c).join('') : h;
+  const bigint = parseInt(full, 16);
+  const r = (bigint >> 16) & 255, g = (bigint >> 8) & 255, b = bigint & 255;
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+/* ---- Customiser logic ---- */
+function openCustomiser(index){
+  if(gameRunning) return;
+  editingIndex = index;
+  editingCopy = JSON.parse(JSON.stringify({
+    name: balls[index].name,
+    hp: balls[index].hp,
+    color: balls[index].color,
+    weapon: Object.assign({}, balls[index].weapon)
+  }));
+  customiserModal.style.display = 'flex';
+  loadCustomTab('stats');
+  renderCustomPreview();
+}
+customTabs.forEach(t=> t.addEventListener('click', ()=>{
+  customTabs.forEach(x=>x.classList.remove('active'));
+  t.classList.add('active');
+  loadCustomTab(t.dataset.tab);
+}));
+function loadCustomTab(tab){
+  customBody.innerHTML = '';
+  if(tab === 'stats'){
+    customBody.innerHTML = `
+      <label class="setting-label">Name</label><br>
+      <input id="custName" type="text" value="${editingCopy.name}"><br>
+      <label class="setting-label">HP</label><br>
+      <input id="custHP" type="number" value="${editingCopy.hp}"><br>
+      <label class="setting-label">Base Speed</label><br>
+      <input id="custSpeed" type="number" value="3" step="0.1"><br>
+    `;
+    document.getElementById('custName').addEventListener('input', e=>{ editingCopy.name = e.target.value; renderCustomPreview();});
+    document.getElementById('custHP').addEventListener('input', e=> editingCopy.hp = parseFloat(e.target.value));
+  } else if(tab === 'weapon'){
+    customBody.innerHTML = `
+      <label class="setting-label">Damage</label><br>
+      <input id="custWDamage" type="number" value="${editingCopy.weapon.damage}"><br>
+      <label class="setting-label">Spin Speed</label><br>
+      <input id="custWSpin" type="number" value="${editingCopy.weapon.spin}"><br>
+      <div class="small-muted">Weapon gallery (rect placeholder)</div>
+      <div class="weapon-grid"><div class="weapon-slot active">RECT</div></div>
+    `;
+    document.getElementById('custWDamage').addEventListener('input', e=> editingCopy.weapon.damage = parseFloat(e.target.value));
+    document.getElementById('custWSpin').addEventListener('input', e=> editingCopy.weapon.spin = parseFloat(e.target.value));
+  } else if(tab === 'custom'){
+    customBody.innerHTML = `<div class="small-muted">Unlocked colors</div><div class="color-grid" id="colorGrid"></div>`;
+    const grid = document.getElementById('colorGrid');
+    const unlocked = ['#ff3b3b','#3bff66','#3b9bff','#ffd23b']; // red, green, blue, yellow only
+    unlocked.forEach(c=>{
+      const d = document.createElement('div'); d.className='color-cell'; d.style.background=c; d.onclick=()=>{ editingCopy.color=c; renderCustomPreview(); }; grid.appendChild(d);
+    });
+    // locked placeholders
+    for(let i=0;i<60;i++){ const d=document.createElement('div'); d.className='color-cell locked'; grid.appendChild(d); }
+  }
+}
+function renderCustomPreview(){
+  customPreview.style.background = editingCopy.color;
+  customPreview.textContent = editingCopy.name || '';
+}
+cancelCustom.addEventListener('click', ()=>{
+  editingIndex = null; editingCopy = null; customiserModal.style.display = 'none';
+});
+confirmCustom.addEventListener('click', ()=>{
+  if(editingIndex !== null && editingCopy){
+    const target = balls[editingIndex];
+    target.name = editingCopy.name;
+    target.hp = editingCopy.hp;
+    target.color = editingCopy.color;
+    target.weapon.damage = editingCopy.weapon.damage;
+    target.weapon.spin = editingCopy.weapon.spin;
+    target.el.style.background = target.color;
+    renderBallList();
+  }
+  editingIndex = null; editingCopy = null; customiserModal.style.display = 'none';
+});
+
+/* ---- Initialization ---- */
+function initialSpawn(){
+  addBallProg();
+  addBallProg();
+  renderBallList();
+}
+function addBallProg(){
+  ballCounter++;
+  const b = new Ball('Ball ' + ballCounter);
+  balls.push(b);
+}
+window.addEventListener('resize', ()=>{ applyLayout(); clampBallsToArena(); if(stormCanvas){ stormCanvas.width = arena.clientWidth; stormCanvas.height = arena.clientHeight; } });
+applyLayout();
+ensureCanvas();
+initialSpawn();
+renderBallList();
+/* ensure swatch clicks open hidden inputs */
+stormSwatch.addEventListener('click', ()=> stormColorInput.click());
+borderSwatch.addEventListener('click', ()=> borderColorInput.click());
+/* default health display onBall */
+healthDisplaySelect.value = 'onBall';
+healthDisplaySelect.addEventListener('change', ()=> balls.forEach(b=>b.updateDOM()));
+/* stormStart sync */
+stormStartInput.addEventListener('input', ()=> { stormRadius = parseFloat(stormStartInput.value) || stormRadius; });
+
+/* Expose for debug */
+window._bs = { balls, applyLayout, renderBallList, loop };
+
+</script>
 </body>
 </html>
