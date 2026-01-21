@@ -11,24 +11,19 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-
     <audio id="bgMusic" autoplay loop>
         <source src="https://vgmsite.com/soundtracks/armored-core-nexus/zahvmqai/1-02.%20World%20Navigation.mp3" type="audio/mpeg">
     </audio>
-
     <div class="bg-orb orb-1"></div>
     <div class="bg-orb orb-2"></div>
     <div class="grid-overlay"></div>
-
     <canvas id="ballCanvas"></canvas>
-
     <div class="app-container">
         <nav class="sidebar">
             <div class="brand">
                 <div class="brand-icon">BS</div>
                 <h1>Brawl<span>Spheres</span></h1>
             </div>
-
             <div class="menu">
                 <button class="nav-btn active" data-target="sandboxes">
                     <i class="fa-solid fa-gamepad"></i> Play
@@ -48,15 +43,12 @@
                 <div class="version">VER: ALPHA 0.1</div>
             </div>
         </nav>
-
         <main class="content-area">
-            
             <section id="sandboxes" class="view active-view">
                 <div class="header-text">
                     <h2>Simulation Select</h2>
                     <p>Choose your battlefield parameters.</p>
                 </div>
-                
                 <div class="game-grid">
                     <div class="game-card primary">
                         <div class="card-image" style="background-image: url('https://www.dellaadventure.com/uploads/5710Ball%20Fighting%20%20(1).jpg');">
@@ -68,7 +60,6 @@
                             <a href="battles.html" class="action-btn">INITIALIZE <i class="fa-solid fa-arrow-right"></i></a>
                         </div>
                     </div>
-
                     <div class="game-card locked">
                         <div class="card-image" style="background-image: url('https://bounce-4-fun.co.uk/images/zorb-balling/zorb-ball-racing2.jpg');">
                             <div class="badge lock"><i class="fa-solid fa-lock"></i> DEV</div>
@@ -79,7 +70,6 @@
                             <button class="action-btn disabled">LOCKED</button>
                         </div>
                     </div>
-
                     <div class="game-card locked">
                         <div class="card-image" style="background-image: url('https://thumbs.dreamstime.com/b/captured-prisoner-prison-ball-hand-d-model-41792789.jpg');">
                             <div class="badge lock"><i class="fa-solid fa-lock"></i> DEV</div>
@@ -92,7 +82,6 @@
                     </div>
                 </div>
             </section>
-
             <section id="news" class="view">
                 <div class="header-text">
                     <h2>Patch Intelligence</h2>
@@ -110,7 +99,6 @@
                     </article>
                 </div>
             </section>
-
             <section id="options" class="view">
                 <div class="header-text">
                     <h2>System Configuration</h2>
@@ -132,34 +120,27 @@
                     </div>
                 </div>
             </section>
-
         </main>
     </div>
-
     <script src="main.js"></script>
     <script>
-        // Inline JS to handle the new tab switching logic immediately
         document.addEventListener('DOMContentLoaded', () => {
             const tabs = document.querySelectorAll('.nav-btn');
             const views = document.querySelectorAll('.view');
             const audio = document.getElementById('bgMusic');
             const musicVol = document.getElementById('musicVolume');
 
-            // Tab Switching Logic
+            // tabs
             tabs.forEach(tab => {
                 tab.addEventListener('click', () => {
-                    // Remove active class from all
                     tabs.forEach(t => t.classList.remove('active'));
                     views.forEach(v => v.classList.remove('active-view'));
-
-                    // Add active to clicked
                     tab.classList.add('active');
                     const targetId = tab.getAttribute('data-target');
                     document.getElementById(targetId).classList.add('active-view');
                 });
             });
-
-            // Volume Logic (Basic Hookup)
+           // volume stuff
             if(musicVol && audio) {
                 musicVol.addEventListener('input', (e) => {
                     audio.volume = e.target.value;
