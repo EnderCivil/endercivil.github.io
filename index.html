@@ -3,87 +3,169 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BrawlSpheres</title>
+    <title>BrawlSpheres // HUB</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
+
     <audio id="bgMusic" autoplay loop>
         <source src="https://vgmsite.com/soundtracks/armored-core-nexus/zahvmqai/1-02.%20World%20Navigation.mp3" type="audio/mpeg">
     </audio>
 
-    <!-- Unified Top Bar with Tabs -->
-    <header class="top-bar">
-        <div class="logo">BrawlSpheres</div>
-        <nav class="tab-selector">
-            <button class="tab active" data-tab="sandboxes">Sandboxes</button>
-            <button class="tab" data-tab="news">News</button>
-            <button class="tab" data-tab="options">Options</button>
-        </nav>
-        <a href="https://discord.gg/BPvWwaaQMH" target="_blank" class="discord-btn">
-            <img src="https://cdn-icons-png.flaticon.com/512/5968/5968756.png" alt="Discord">
-        </a>
-    </header>
+    <div class="bg-orb orb-1"></div>
+    <div class="bg-orb orb-2"></div>
+    <div class="grid-overlay"></div>
 
-    <!-- Main Content -->
-    <main>
-        <!-- Sandboxes Page -->
-        <section id="sandboxes" class="tab-content active">
-            <div class="cards-container">
-                <!-- Battles -->
-                <div class="card">
-                    <img src="https://www.dellaadventure.com/uploads/5710Ball%20Fighting%20%20(1).jpg" alt="Battles Preview">
-                    <h2>Battles</h2>
-                    <p>A sandbox mode where a customizable amount of balls fight to the death, each with unique attributes and weapons.</p>
-                    <a href="battles.html" class="play-btn">Play</a>
-                </div>
-                <!-- Races -->
-                <div class="card disabled">
-                    <img src="https://bounce-4-fun.co.uk/images/zorb-balling/zorb-ball-racing2.jpg" alt="Races Preview">
-                    <h2>Races</h2>
-                    <p>Race through arenas and mazes, dodging obstacles to hit the finish line. Fully customizable with a level editor.</p>
-                    <span class="coming-soon">Coming Soon</span>
-                </div>
-                <!-- Breakouts -->
-                <div class="card disabled">
-                    <img src="https://thumbs.dreamstime.com/b/captured-prisoner-prison-ball-hand-d-model-41792789.jpg" alt="Breakouts Preview">
-                    <h2>Breakouts</h2>
-                    <p>Team-based chaos where balls destroy borders over time. Highly customizable for intense matches.</p>
-                    <span class="coming-soon">Coming Soon</span>
-                </div>
-            </div>
-        </section>
-
-        <!-- News Page -->
-        <section id="news" class="tab-content">
-            <div class="news-container">
-                <h2>Latest Updates</h2>
-                <article>
-                    <h3>Update 0.1 - Initial Alpha</h3>
-                    <p>Introduced Battles mode and basic customization. Many more features coming soon!</p>
-                </article>
-                <article>
-                    <h3>Coming Soon</h3>
-                    <p>Races and Breakouts modes are under development. Stay tuned for updates.</p>
-                </article>
-                <p class="discord-note">Join our <a href="https://discord.gg/BPvWwaaQMH" target="_blank">Discord</a> for full patch notes!</p>
-            </div>
-        </section>
-
-        <!-- Options Page -->
-        <section id="options" class="tab-content">
-            <div class="options-container">
-                <h2>Settings</h2>
-                <label>Music Volume: <input type="range" id="musicVolume" min="0" max="1" step="0.01" value="1"></label>
-                <label>SFX Volume: <input type="range" id="sfxVolume" min="0" max="1" step="0.01" value="1"></label>
-                <p>More options coming soon!</p>
-            </div>
-        </section>
-    </main>
-
-    <!-- Version & Canvas -->
-    <div class="page-version">ALPHA</div>
     <canvas id="ballCanvas"></canvas>
 
+    <div class="app-container">
+        <nav class="sidebar">
+            <div class="brand">
+                <div class="brand-icon">BS</div>
+                <h1>Brawl<span>Spheres</span></h1>
+            </div>
+
+            <div class="menu">
+                <button class="nav-btn active" data-target="sandboxes">
+                    <i class="fa-solid fa-gamepad"></i> Play
+                </button>
+                <button class="nav-btn" data-target="news">
+                    <i class="fa-solid fa-newspaper"></i> Intel
+                </button>
+                <button class="nav-btn" data-target="options">
+                    <i class="fa-solid fa-sliders"></i> System
+                </button>
+            </div>
+
+            <div class="sidebar-footer">
+                <a href="https://discord.gg/BPvWwaaQMH" target="_blank" class="discord-link">
+                    <i class="fa-brands fa-discord"></i> Join Comm-Link
+                </a>
+                <div class="version">VER: ALPHA 0.1</div>
+            </div>
+        </nav>
+
+        <main class="content-area">
+            
+            <section id="sandboxes" class="view active-view">
+                <div class="header-text">
+                    <h2>Simulation Select</h2>
+                    <p>Choose your battlefield parameters.</p>
+                </div>
+                
+                <div class="game-grid">
+                    <div class="game-card primary">
+                        <div class="card-image" style="background-image: url('https://www.dellaadventure.com/uploads/5710Ball%20Fighting%20%20(1).jpg');">
+                            <div class="badge">ACTIVE</div>
+                        </div>
+                        <div class="card-content">
+                            <h3>Battles</h3>
+                            <p>Fight to the death with customizable attributes and weaponry.</p>
+                            <a href="battles.html" class="action-btn">INITIALIZE <i class="fa-solid fa-arrow-right"></i></a>
+                        </div>
+                    </div>
+
+                    <div class="game-card locked">
+                        <div class="card-image" style="background-image: url('https://bounce-4-fun.co.uk/images/zorb-balling/zorb-ball-racing2.jpg');">
+                            <div class="badge lock"><i class="fa-solid fa-lock"></i> DEV</div>
+                        </div>
+                        <div class="card-content">
+                            <h3>Races</h3>
+                            <p>Navigate mazes and obstacles against the clock.</p>
+                            <button class="action-btn disabled">LOCKED</button>
+                        </div>
+                    </div>
+
+                    <div class="game-card locked">
+                        <div class="card-image" style="background-image: url('https://thumbs.dreamstime.com/b/captured-prisoner-prison-ball-hand-d-model-41792789.jpg');">
+                            <div class="badge lock"><i class="fa-solid fa-lock"></i> DEV</div>
+                        </div>
+                        <div class="card-content">
+                            <h3>Breakouts</h3>
+                            <p>Team-based border destruction chaos.</p>
+                            <button class="action-btn disabled">LOCKED</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="news" class="view">
+                <div class="header-text">
+                    <h2>Patch Intelligence</h2>
+                </div>
+                <div class="news-feed">
+                    <article class="news-item">
+                        <div class="news-date">CURRENT</div>
+                        <h3>Alpha 0.1 Deployment</h3>
+                        <p>Battles mode is live. Physics engine initialized. Basic customization protocols available.</p>
+                    </article>
+                    <article class="news-item future">
+                        <div class="news-date">PENDING</div>
+                        <h3>Races & Breakouts</h3>
+                        <p>Development in progress. Expect turbulence.</p>
+                    </article>
+                </div>
+            </section>
+
+            <section id="options" class="view">
+                <div class="header-text">
+                    <h2>System Configuration</h2>
+                </div>
+                <div class="settings-panel">
+                    <div class="setting-row">
+                        <label for="musicVolume">Music Intensity</label>
+                        <div class="range-wrapper">
+                            <i class="fa-solid fa-music"></i>
+                            <input type="range" id="musicVolume" min="0" max="1" step="0.01" value="1">
+                        </div>
+                    </div>
+                    <div class="setting-row">
+                        <label for="sfxVolume">SFX Gain</label>
+                        <div class="range-wrapper">
+                            <i class="fa-solid fa-volume-high"></i>
+                            <input type="range" id="sfxVolume" min="0" max="1" step="0.01" value="1">
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
     <script src="main.js"></script>
+    <script>
+        // Inline JS to handle the new tab switching logic immediately
+        document.addEventListener('DOMContentLoaded', () => {
+            const tabs = document.querySelectorAll('.nav-btn');
+            const views = document.querySelectorAll('.view');
+            const audio = document.getElementById('bgMusic');
+            const musicVol = document.getElementById('musicVolume');
+
+            // Tab Switching Logic
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // Remove active class from all
+                    tabs.forEach(t => t.classList.remove('active'));
+                    views.forEach(v => v.classList.remove('active-view'));
+
+                    // Add active to clicked
+                    tab.classList.add('active');
+                    const targetId = tab.getAttribute('data-target');
+                    document.getElementById(targetId).classList.add('active-view');
+                });
+            });
+
+            // Volume Logic (Basic Hookup)
+            if(musicVol && audio) {
+                musicVol.addEventListener('input', (e) => {
+                    audio.volume = e.target.value;
+                });
+            }
+        });
+    </script>
 </body>
 </html>
