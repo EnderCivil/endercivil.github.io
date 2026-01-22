@@ -7,6 +7,7 @@
     --text-main: #ffffff;
     --text-muted: #8b9bb4;
     --glass-border: 1px solid rgba(255, 255, 255, 0.1);
+    --success: #00ff9d;
 }
 
 * {
@@ -19,7 +20,7 @@ body {
     font-family: 'Rajdhani', sans-serif;
     background-color: var(--bg-dark);
     color: var(--text-main);
-    overflow: hidden; /* App-like feel */
+    overflow: hidden;
     height: 100vh;
     width: 100vw;
 }
@@ -76,17 +77,31 @@ body {
     display: flex;
     height: 100vh;
     backdrop-filter: blur(5px);
+    position: relative;
 }
 
 /* --- Sidebar --- */
 .sidebar {
     width: 260px;
-    background: rgba(0,0,0,0.4);
+    background: rgba(0,0,0,0.6);
     border-right: var(--glass-border);
     display: flex;
     flex-direction: column;
     padding: 2rem;
-    z-index: 10;
+    z-index: 100;
+    transition: transform 0.3s ease;
+}
+
+.menu-toggle {
+    display: none; /* Hidden on desktop */
+    background: none;
+    border: none;
+    color: var(--text-main);
+    font-size: 1.5rem;
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    cursor: pointer;
 }
 
 .brand {
@@ -120,6 +135,7 @@ body {
     flex-direction: column;
     gap: 10px;
     flex-grow: 1;
+    overflow-y: auto;
 }
 
 .nav-btn {
@@ -141,7 +157,7 @@ body {
 .nav-btn:hover {
     color: white;
     background: rgba(255,255,255,0.05);
-    transform: translateX(5px);
+    transform: translateX(0px);
 }
 
 .nav-btn.active {
@@ -153,11 +169,12 @@ body {
 .sidebar-footer {
     border-top: var(--glass-border);
     padding-top: 1.5rem;
+    margin-top: 1rem;
 }
 
 .discord-link {
     display: block;
-    color: #5865F2; /* Discord Color */
+    color: #5865F2; 
     text-decoration: none;
     font-weight: bold;
     margin-bottom: 10px;
@@ -176,11 +193,38 @@ body {
     position: relative;
     padding: 3rem;
     overflow-y: auto;
+    width: 100%;
 }
+
+/* Top bar currency display */
+.currency-display {
+    position: absolute;
+    top: 2rem;
+    right: 3rem;
+    display: flex;
+    gap: 1.5rem;
+    z-index: 50;
+}
+
+.currency-item {
+    background: var(--panel-bg);
+    border: var(--glass-border);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.currency-item.cores i { color: var(--accent-red); }
+.currency-item.tickets i { color: var(--accent-purple); }
 
 .view {
     display: none;
     animation: fadeIn 0.4s ease-in-out;
+    padding-bottom: 50px;
 }
 
 .view.active-view {
@@ -211,6 +255,7 @@ body {
     overflow: hidden;
     transition: 0.3s;
     position: relative;
+    flex-shrink: 0;
 }
 
 .game-card:hover {
@@ -269,6 +314,150 @@ body {
 .action-btn.disabled { background: #333; color: #666; cursor: not-allowed; }
 .action-btn.disabled:hover { background: #333; box-shadow: none; }
 
+/* --- STORE GRID --- */
+.store-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1.5rem;
+}
+
+.store-item {
+    background: var(--panel-bg);
+    border: var(--glass-border);
+    border-radius: 12px;
+    padding: 1rem;
+    text-align: center;
+    transition: 0.3s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.store-item:hover { border-color: var(--accent-blue); background: rgba(255,255,255,0.05); }
+
+.item-preview {
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    margin-bottom: 1rem;
+    box-shadow: 0 0 15px rgba(0,0,0,0.5);
+    border: 2px solid #333;
+}
+
+.store-item h4 { font-size: 1.2rem; margin-bottom: 5px; }
+.store-item .price { color: var(--accent-red); font-weight: bold; margin-bottom: 1rem; display: flex; align-items: center; gap: 5px; justify-content: center; }
+
+.buy-btn {
+    background: transparent;
+    border: 1px solid var(--accent-blue);
+    color: var(--accent-blue);
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: 0.3s;
+    width: 100%;
+}
+
+.buy-btn:hover { background: var(--accent-blue); color: black; }
+.buy-btn.owned { background: #333; border-color: #333; color: #888; cursor: default; }
+
+/* --- PASS SYSTEM --- */
+.pass-layout {
+    display: grid;
+    grid-template-columns: 250px 1fr;
+    gap: 2rem;
+    height: 60vh;
+}
+
+.pass-selector {
+    background: var(--panel-bg);
+    border: var(--glass-border);
+    border-radius: 12px;
+    overflow-y: auto;
+    padding: 1rem;
+}
+
+.pass-option {
+    padding: 1rem;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-bottom: 10px;
+    transition: 0.2s;
+    background: rgba(0,0,0,0.2);
+}
+
+.pass-option:hover { background: rgba(255,255,255,0.05); }
+.pass-option.active { border-color: var(--accent-purple); background: rgba(157, 0, 255, 0.1); }
+.pass-option h4 { color: white; margin-bottom: 5px; }
+.pass-option .status { font-size: 0.8rem; color: var(--text-muted); }
+
+.pass-display {
+    background: var(--panel-bg);
+    border: var(--glass-border);
+    border-radius: 12px;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+}
+
+.pass-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.pass-buy-btn {
+    background: var(--accent-red);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+    font-family: inherit;
+}
+.pass-buy-btn.active-pass { background: var(--success); color: black; cursor: default; }
+
+.pass-track-container {
+    overflow-x: auto;
+    padding-bottom: 20px;
+}
+
+.pass-track {
+    display: flex;
+    gap: 20px;
+    padding: 10px;
+    width: max-content;
+}
+
+.pass-node {
+    width: 120px;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    opacity: 0.5;
+}
+
+.pass-node.unlocked { opacity: 1; border-color: var(--accent-purple); box-shadow: 0 0 15px rgba(157, 0, 255, 0.2); }
+.pass-node .level-badge { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: #333; font-size: 0.7rem; padding: 2px 8px; border-radius: 10px; }
+.pass-node .reward-preview { width: 50px; height: 50px; border-radius: 50%; background: #555; margin: 10px 0; }
+.pass-node .cost { font-size: 0.8rem; color: var(--accent-purple); }
+
+/* --- INVENTORY --- */
+.inventory-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1.5rem;
+}
+
 /* --- News --- */
 .news-feed { display: flex; flex-direction: column; gap: 1rem; max-width: 600px; }
 
@@ -321,3 +510,60 @@ input[type=range]::-webkit-slider-thumb {
 }
 
 input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+/* --- MOBILE RESPONSIVENESS --- */
+@media (max-width: 768px) {
+    .app-container { flex-direction: column; }
+    
+    .sidebar {
+        position: fixed;
+        top: 0; left: 0;
+        height: 100vh;
+        width: 80%;
+        max-width: 300px;
+        transform: translateX(-100%);
+        background: #09090b; 
+        box-shadow: 5px 0 20px rgba(0,0,0,0.5);
+    }
+    
+    .sidebar.active { transform: translateX(0); }
+    
+    /* Toggle button visible on mobile */
+    .mobile-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        width: 100%;
+        position: absolute;
+        top: 0; left: 0;
+        z-index: 40;
+    }
+    
+    .menu-toggle { display: block; position: static; }
+    
+    .content-area {
+        padding: 5rem 1.5rem 2rem 1.5rem; /* More top padding for header */
+        width: 100vw;
+    }
+    
+    .currency-display {
+        top: 1rem;
+        right: 1rem;
+        font-size: 0.8rem;
+        gap: 0.5rem;
+    }
+    
+    .game-grid { justify-content: center; }
+    .game-card { width: 100%; }
+    
+    .pass-layout {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+        height: auto;
+    }
+    
+    .pass-selector { max-height: 150px; margin-bottom: 1rem; }
+    
+    .header-text h2 { font-size: 2rem; }
+}
