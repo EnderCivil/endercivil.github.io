@@ -1,569 +1,497 @@
-:root {
-    --bg-dark: #09090b;
-    --panel-bg: rgba(20, 20, 25, 0.7);
-    --accent-blue: #00d2ff;
-    --accent-purple: #9d00ff;
-    --accent-red: #ff2a6d;
-    --text-main: #ffffff;
-    --text-muted: #8b9bb4;
-    --glass-border: 1px solid rgba(255, 255, 255, 0.1);
-    --success: #00ff9d;
-}
-
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    font-family: 'Rajdhani', sans-serif;
-    background-color: var(--bg-dark);
-    color: var(--text-main);
-    overflow: hidden;
-    height: 100vh;
-    width: 100vw;
-}
-
-/* --- Background Effects --- */
-.grid-overlay {
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background-image: 
-        linear-gradient(rgba(0, 210, 255, 0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 210, 255, 0.03) 1px, transparent 1px);
-    background-size: 40px 40px;
-    z-index: -2;
-    pointer-events: none;
-}
-
-.bg-orb {
-    position: absolute;
-    border-radius: 50%;
-    filter: blur(80px);
-    z-index: -3;
-    opacity: 0.4;
-    animation: floatOrb 10s infinite alternate ease-in-out;
-}
-
-.orb-1 {
-    top: -10%; left: -10%;
-    width: 50vw; height: 50vw;
-    background: var(--accent-purple);
-}
-
-.orb-2 {
-    bottom: -10%; right: -10%;
-    width: 40vw; height: 40vw;
-    background: var(--accent-blue);
-    animation-delay: -5s;
-}
-
-@keyframes floatOrb {
-    0% { transform: translate(0, 0); }
-    100% { transform: translate(50px, 50px); }
-}
-
-#ballCanvas {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    z-index: -1;
-    opacity: 0.5;
-}
-
-/* --- Layout --- */
-.app-container {
-    display: flex;
-    height: 100vh;
-    backdrop-filter: blur(5px);
-    position: relative;
-}
-
-/* --- Sidebar --- */
-.sidebar {
-    width: 260px;
-    background: rgba(0,0,0,0.6);
-    border-right: var(--glass-border);
-    display: flex;
-    flex-direction: column;
-    padding: 2rem;
-    z-index: 100;
-    transition: transform 0.3s ease;
-}
-
-.menu-toggle {
-    display: none; /* Hidden on desktop */
-    background: none;
-    border: none;
-    color: var(--text-main);
-    font-size: 1.5rem;
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-    cursor: pointer;
-}
-
-.brand {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    margin-bottom: 3rem;
-}
-
-.brand-icon {
-    width: 40px; height: 40px;
-    background: linear-gradient(45deg, var(--accent-blue), var(--accent-purple));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    border-radius: 8px;
-    box-shadow: 0 0 15px var(--accent-blue);
-}
-
-.brand h1 {
-    font-size: 1.5rem;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-}
-
-.brand span { color: var(--accent-blue); }
-
-.menu {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    flex-grow: 1;
-    overflow-y: auto;
-}
-
-.nav-btn {
-    background: transparent;
-    border: none;
-    color: var(--text-muted);
-    font-family: inherit;
-    font-size: 1.2rem;
-    text-align: left;
-    padding: 12px 15px;
-    cursor: pointer;
-    border-radius: 8px;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.nav-btn:hover {
-    color: white;
-    background: rgba(255,255,255,0.05);
-    transform: translateX(0px);
-}
-
-.nav-btn.active {
-    background: linear-gradient(90deg, rgba(0, 210, 255, 0.1), transparent);
-    color: var(--accent-blue);
-    border-left: 3px solid var(--accent-blue);
-}
-
-.sidebar-footer {
-    border-top: var(--glass-border);
-    padding-top: 1.5rem;
-    margin-top: 1rem;
-}
-
-.discord-link {
-    display: block;
-    color: #5865F2; 
-    text-decoration: none;
-    font-weight: bold;
-    margin-bottom: 10px;
-    transition: 0.2s;
-}
-.discord-link:hover { text-shadow: 0 0 10px #5865F2; }
-
-.version {
-    font-size: 0.8rem;
-    color: #444;
-}
-
-/* --- Main Content --- */
-.content-area {
-    flex-grow: 1;
-    position: relative;
-    padding: 3rem;
-    overflow-y: auto;
-    width: 100%;
-}
-
-/* Top bar currency display */
-.currency-display {
-    position: absolute;
-    top: 2rem;
-    right: 3rem;
-    display: flex;
-    gap: 1.5rem;
-    z-index: 50;
-}
-
-.currency-item {
-    background: var(--panel-bg);
-    border: var(--glass-border);
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: bold;
-    font-size: 1.1rem;
-}
-
-.currency-item.cores i { color: var(--accent-red); }
-.currency-item.tickets i { color: var(--accent-purple); }
-
-.view {
-    display: none;
-    animation: fadeIn 0.4s ease-in-out;
-    padding-bottom: 50px;
-}
-
-.view.active-view {
-    display: block;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.header-text { margin-bottom: 2rem; }
-.header-text h2 { font-size: 3rem; text-transform: uppercase; margin-bottom: 0.5rem; }
-.header-text p { color: var(--accent-blue); letter-spacing: 1px; }
-
-/* --- Game Cards --- */
-.game-grid {
-    display: flex;
-    gap: 2rem;
-    flex-wrap: wrap;
-}
-
-.game-card {
-    width: 300px;
-    background: var(--panel-bg);
-    border: var(--glass-border);
-    border-radius: 12px;
-    overflow: hidden;
-    transition: 0.3s;
-    position: relative;
-    flex-shrink: 0;
-}
-
-.game-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    border-color: var(--accent-blue);
-}
-
-.card-image {
-    height: 160px;
-    background-size: cover;
-    background-position: center;
-    position: relative;
-}
-
-.badge {
-    position: absolute;
-    top: 10px; right: 10px;
-    background: var(--accent-blue);
-    color: black;
-    font-weight: bold;
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-size: 0.8rem;
-}
-
-.badge.lock { background: #333; color: #fff; }
-
-.card-content { padding: 1.5rem; }
-.card-content h3 { font-size: 1.5rem; margin-bottom: 0.5rem; }
-.card-content p { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.4; }
-
-.action-btn {
-    display: inline-block;
-    padding: 10px 20px;
-    background: var(--accent-blue);
-    color: black;
-    text-decoration: none;
-    font-weight: bold;
-    border-radius: 4px;
-    text-transform: uppercase;
-    transition: 0.3s;
-    border: none;
-    cursor: pointer;
-    width: 100%;
-    text-align: center;
-}
-
-.action-btn:hover {
-    background: white;
-    box-shadow: 0 0 15px var(--accent-blue);
-}
-
-.game-card.locked { opacity: 0.6; filter: grayscale(0.8); }
-.game-card.locked:hover { transform: none; box-shadow: none; border-color: #333; }
-.action-btn.disabled { background: #333; color: #666; cursor: not-allowed; }
-.action-btn.disabled:hover { background: #333; box-shadow: none; }
-
-/* --- STORE GRID --- */
-.store-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 1.5rem;
-}
-
-.store-item {
-    background: var(--panel-bg);
-    border: var(--glass-border);
-    border-radius: 12px;
-    padding: 1rem;
-    text-align: center;
-    transition: 0.3s;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.store-item:hover { border-color: var(--accent-blue); background: rgba(255,255,255,0.05); }
-
-.item-preview {
-    width: 80px; height: 80px;
-    border-radius: 50%;
-    margin-bottom: 1rem;
-    box-shadow: 0 0 15px rgba(0,0,0,0.5);
-    border: 2px solid #333;
-}
-
-.store-item h4 { font-size: 1.2rem; margin-bottom: 5px; }
-.store-item .price { color: var(--accent-red); font-weight: bold; margin-bottom: 1rem; display: flex; align-items: center; gap: 5px; justify-content: center; }
-
-.buy-btn {
-    background: transparent;
-    border: 1px solid var(--accent-blue);
-    color: var(--accent-blue);
-    padding: 8px 15px;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: 0.3s;
-    width: 100%;
-}
-
-.buy-btn:hover { background: var(--accent-blue); color: black; }
-.buy-btn.owned { background: #333; border-color: #333; color: #888; cursor: default; }
-
-/* --- PASS SYSTEM --- */
-.pass-layout {
-    display: grid;
-    grid-template-columns: 250px 1fr;
-    gap: 2rem;
-    height: 60vh;
-}
-
-.pass-selector {
-    background: var(--panel-bg);
-    border: var(--glass-border);
-    border-radius: 12px;
-    overflow-y: auto;
-    padding: 1rem;
-}
-
-.pass-option {
-    padding: 1rem;
-    border: 1px solid transparent;
-    border-radius: 8px;
-    cursor: pointer;
-    margin-bottom: 10px;
-    transition: 0.2s;
-    background: rgba(0,0,0,0.2);
-}
-
-.pass-option:hover { background: rgba(255,255,255,0.05); }
-.pass-option.active { border-color: var(--accent-purple); background: rgba(157, 0, 255, 0.1); }
-.pass-option h4 { color: white; margin-bottom: 5px; }
-.pass-option .status { font-size: 0.8rem; color: var(--text-muted); }
-
-.pass-display {
-    background: var(--panel-bg);
-    border: var(--glass-border);
-    border-radius: 12px;
-    padding: 2rem;
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    overflow: hidden;
-}
-
-.pass-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2rem;
-}
-
-.pass-buy-btn {
-    background: var(--accent-red);
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 4px;
-    font-weight: bold;
-    cursor: pointer;
-    font-family: inherit;
-}
-.pass-buy-btn.active-pass { background: var(--success); color: black; cursor: default; }
-
-.pass-track-container {
-    overflow-x: auto;
-    padding-bottom: 20px;
-}
-
-.pass-track {
-    display: flex;
-    gap: 20px;
-    padding: 10px;
-    width: max-content;
-}
-
-.pass-node {
-    width: 120px;
-    background: rgba(0,0,0,0.3);
-    border: 1px solid #333;
-    border-radius: 8px;
-    padding: 1rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    position: relative;
-    opacity: 0.5;
-}
-
-.pass-node.unlocked { opacity: 1; border-color: var(--accent-purple); box-shadow: 0 0 15px rgba(157, 0, 255, 0.2); }
-.pass-node .level-badge { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: #333; font-size: 0.7rem; padding: 2px 8px; border-radius: 10px; }
-.pass-node .reward-preview { width: 50px; height: 50px; border-radius: 50%; background: #555; margin: 10px 0; }
-.pass-node .cost { font-size: 0.8rem; color: var(--accent-purple); }
-
-/* --- INVENTORY --- */
-.inventory-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 1.5rem;
-}
-
-/* --- News --- */
-.news-feed { display: flex; flex-direction: column; gap: 1rem; max-width: 600px; }
-
-.news-item {
-    background: linear-gradient(90deg, rgba(255,255,255,0.05), transparent);
-    padding: 1.5rem;
-    border-left: 2px solid var(--accent-blue);
-}
-
-.news-item.future { border-color: var(--accent-purple); }
-
-.news-date { font-size: 0.7rem; font-weight: bold; margin-bottom: 5px; opacity: 0.7; letter-spacing: 2px; }
-
-/* --- Options --- */
-.settings-panel {
-    background: var(--panel-bg);
-    padding: 2rem;
-    border-radius: 12px;
-    max-width: 500px;
-    border: var(--glass-border);
-}
-
-.setting-row { margin-bottom: 2rem; }
-.setting-row label { display: block; margin-bottom: 10px; font-size: 1.1rem; }
-
-.range-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    color: var(--accent-blue);
-}
-
-input[type=range] {
-    -webkit-appearance: none;
-    width: 100%;
-    height: 6px;
-    background: #333;
-    border-radius: 3px;
-    outline: none;
-}
-
-input[type=range]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 18px; height: 18px;
-    background: var(--accent-blue);
-    border-radius: 50%;
-    cursor: pointer;
-    box-shadow: 0 0 10px var(--accent-blue);
-    transition: 0.2s;
-}
-
-input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
-
-/* --- MOBILE RESPONSIVENESS --- */
-@media (max-width: 768px) {
-    .app-container { flex-direction: column; }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BrawlSpheres // HUB</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <audio id="bgMusic" loop>
+        <source src="https://lambda.vgmtreasurechest.com/soundtracks/armored-core-nexus-gamerip-2004/crckrfcu/1.mp3" type="audio/mpeg">
+    </audio>
     
-    .sidebar {
-        position: fixed;
-        top: 0; left: 0;
-        height: 100vh;
-        width: 80%;
-        max-width: 300px;
-        transform: translateX(-100%);
-        background: #09090b; 
-        box-shadow: 5px 0 20px rgba(0,0,0,0.5);
-    }
-    
-    .sidebar.active { transform: translateX(0); }
-    
-    /* Toggle button visible on mobile */
-    .mobile-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 1rem;
-        width: 100%;
-        position: absolute;
-        top: 0; left: 0;
-        z-index: 40;
-    }
-    
-    .menu-toggle { display: block; position: static; }
-    
-    .content-area {
-        padding: 5rem 1.5rem 2rem 1.5rem; /* More top padding for header */
-        width: 100vw;
-    }
-    
-    .currency-display {
-        top: 1rem;
-        right: 1rem;
-        font-size: 0.8rem;
-        gap: 0.5rem;
-    }
-    
-    .game-grid { justify-content: center; }
-    .game-card { width: 100%; }
-    
-    .pass-layout {
-        grid-template-columns: 1fr;
-        grid-template-rows: auto 1fr;
-        height: auto;
-    }
-    
-    .pass-selector { max-height: 150px; margin-bottom: 1rem; }
-    
-    .header-text h2 { font-size: 2rem; }
-}
+    <div class="bg-orb orb-1"></div>
+    <div class="bg-orb orb-2"></div>
+    <div class="grid-overlay"></div>
+    <canvas id="ballCanvas"></canvas>
+
+    <div class="mobile-header">
+        <button class="menu-toggle" id="mobileToggle"><i class="fa-solid fa-bars"></i></button>
+    </div>
+
+    <div class="app-container">
+        <nav class="sidebar">
+            <div class="brand">
+                <h1>Brawl<span>Spheres</span></h1>
+            </div>
+            <div class="menu">
+                <button class="nav-btn active" data-target="sandboxes">
+                    <i class="fa-solid fa-gamepad"></i> Play
+                </button>
+                <button class="nav-btn" data-target="store">
+                    <i class="fa-solid fa-store"></i> Store
+                </button>
+                <button class="nav-btn" data-target="passes">
+                    <i class="fa-solid fa-ticket"></i> Passes
+                </button>
+                <button class="nav-btn" data-target="inventory">
+                    <i class="fa-solid fa-box"></i> Inventory
+                </button>
+                <button class="nav-btn" data-target="news">
+                    <i class="fa-solid fa-newspaper"></i> News
+                </button>
+                <button class="nav-btn" data-target="options">
+                    <i class="fa-solid fa-sliders"></i> Settings
+                </button>
+            </div>
+
+            <div class="sidebar-footer">
+                <a href="https://discord.gg/BPvWwaaQMH" target="_blank" class="discord-link">
+                    <i class="fa-brands fa-discord"></i> Join Discord
+                </a>
+                <div class="version">VER: ALPHA 0.2</div>
+            </div>
+        </nav>
+
+        <main class="content-area">
+            <div class="currency-display">
+                <div class="currency-item cores" title="Cores (Premium Currency)">
+                    <i class="fa-solid fa-bullseye"></i> <span id="core-amount">0</span>
+                </div>
+                <div class="currency-item tickets" title="Pass Tickets">
+                    <i class="fa-solid fa-ticket"></i> <span id="ticket-amount">0</span>
+                </div>
+            </div>
+
+            <section id="sandboxes" class="view active-view">
+                <div class="header-text">
+                    <h2>GAMEMODES</h2>
+                    <p>Choose your simulation.</p>
+                </div>
+                <div class="game-grid">
+                    <div class="game-card primary">
+                        <div class="card-image" style="background-image: url('https://www.dellaadventure.com/uploads/5710Ball%20Fighting%20%20(1).jpg');">
+                            <div class="badge">ACTIVE</div>
+                        </div>
+                        <div class="card-content">
+                            <h3>Battles</h3>
+                            <p>Fight to the death with customizable attributes and weaponry.</p>
+                            <a href="battles.html" class="action-btn">INITIALIZE <i class="fa-solid fa-arrow-right"></i></a>
+                        </div>
+                    </div>
+                    <div class="game-card locked">
+                        <div class="card-image" style="background-image: url('https://bounce-4-fun.co.uk/images/zorb-balling/zorb-ball-racing2.jpg');">
+                            <div class="badge lock"><i class="fa-solid fa-lock"></i> DEV</div>
+                        </div>
+                        <div class="card-content">
+                            <h3>Races</h3>
+                            <p>Navigate mazes and obstacles against the clock.</p>
+                            <button class="action-btn disabled">LOCKED</button>
+                        </div>
+                    </div>
+                    <div class="game-card locked">
+                        <div class="card-image" style="background-image: url('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQsPvkForuZI6ysD0mhgoj1PAwa1u2cKUs1GQ&s');">
+                            <div class="badge lock"><i class="fa-solid fa-lock"></i> DEV</div>
+                        </div>
+                        <div class="card-content">
+                            <h3>Breakouts</h3>
+                            <p>Several teams race to break down all the walls blocking them from victory.</p>
+                            <button class="action-btn disabled">LOCKED</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="store" class="view">
+                <div class="header-text">
+                    <h2>Core Store</h2>
+                    <p>Exchange Cores for cosmetic upgrades.</p>
+                </div>
+                <div class="store-grid" id="store-grid-container">
+                    </div>
+            </section>
+
+            <section id="passes" class="view">
+                <div class="header-text">
+                    <h2>Brawl Passes</h2>
+                    <p>Dedicate Tickets to unlock rewards.</p>
+                </div>
+                <div class="pass-layout">
+                    <div class="pass-selector" id="pass-list">
+                        </div>
+                    <div class="pass-display" id="pass-details">
+                        <h3 style="margin-top:20px; color:#666;">Select a Pass...</h3>
+                    </div>
+                </div>
+            </section>
+
+            <section id="inventory" class="view">
+                <div class="header-text">
+                    <h2>Inventory</h2>
+                    <p>Your owned items.</p>
+                </div>
+                <div class="inventory-grid" id="inventory-grid-container">
+                    </div>
+            </section>
+
+            <section id="news" class="view">
+                <div class="header-text">
+                    <h2>Announcements</h2>
+                </div>
+                <div class="news-feed">
+                    <article class="news-item">
+                        <div class="news-date">CURRENT</div>
+                        <h3>Economy Update</h3>
+                        <p>Store and Battle Passes are now live. Earn Tickets in battles!</p>
+                    </article>
+                    <article class="news-item future">
+                        <div class="news-date">PENDING</div>
+                        <h3>Races & Breakouts</h3>
+                        <p>Development in progress.</p>
+                    </article>
+                </div>
+            </section>
+
+            <section id="options" class="view">
+                <div class="header-text">
+                    <h2>Settings</h2>
+                </div>
+                <div class="settings-panel">
+                    <div class="setting-row">
+                        <label for="musicVolume">Music Volume</label>
+                        <div class="range-wrapper">
+                            <i class="fa-solid fa-music"></i>
+                            <input type="range" id="musicVolume" min="0" max="1" step="0.01" value="1">
+                        </div>
+                    </div>
+                    <div class="setting-row">
+                        <button class="action-btn" onclick="resetSaveData()">Reset Save Data</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- 1. GAME DATA & CONFIG ---
+        const INITIAL_DATA = {
+            cores: 500, // Starting currency
+            tickets: 5,  // Starting tickets
+            ownedItems: ['color_default', 'pattern_none'],
+            unlockedPasses: ['pass_standard'], // Standard pass owned by default
+            passProgress: { 'pass_standard': 0 }, // Progress (index)
+            activePass: 'pass_standard'
+        };
+
+        const ITEMS_DB = [
+            { id: 'color_green', name: 'Neon Green', type: 'Color', price: 100, color: '#00ff00' },
+            { id: 'color_magenta', name: 'Cyber Magenta', type: 'Color', price: 150, color: '#ff00ff' },
+            { id: 'color_crimson', name: 'Crimson', type: 'Color', price: 200, color: '#dc143c' },
+            { id: 'color_gold', name: 'Pure Gold', type: 'Color', price: 500, color: '#ffd700' },
+            { id: 'pat_stripes', name: 'Racing Stripes', type: 'Pattern', price: 300, preview: '||' },
+            { id: 'pat_check', name: 'Checkerboard', type: 'Pattern', price: 350, preview: '::' }
+        ];
+
+        const PASSES_DB = {
+            'pass_standard': {
+                name: 'Standard Pass',
+                price: 0,
+                desc: 'The default progression track.',
+                rewards: [
+                    { ticketCost: 1, itemId: 'color_green', type: 'item' },
+                    { ticketCost: 2, amount: 50, type: 'core' },
+                    { ticketCost: 3, itemId: 'pat_stripes', type: 'item' },
+                    { ticketCost: 4, amount: 100, type: 'core' },
+                    { ticketCost: 5, itemId: 'color_magenta', type: 'item' }
+                ]
+            },
+            'pass_elite': {
+                name: 'Elite Season 1',
+                price: 1000,
+                desc: 'Premium rewards for the dedicated.',
+                rewards: [
+                    { ticketCost: 2, itemId: 'color_crimson', type: 'item' },
+                    { ticketCost: 4, itemId: 'color_gold', type: 'item' },
+                    { ticketCost: 6, itemId: 'pat_check', type: 'item' },
+                    { ticketCost: 8, amount: 500, type: 'core' },
+                    { ticketCost: 10, itemId: 'color_void', type: 'item' } // Dummy item
+                ]
+            }
+        };
+
+        // --- 2. STATE MANAGEMENT ---
+        let playerData = JSON.parse(localStorage.getItem('bs_playerData')) || INITIAL_DATA;
+
+        // Ensure defaults exist if old save loaded
+        if (!playerData.tickets) playerData.tickets = 0;
+        if (!playerData.passProgress) playerData.passProgress = {};
+
+        function saveGame() {
+            localStorage.setItem('bs_playerData', JSON.stringify(playerData));
+            updateUI();
+        }
+
+        // --- 3. UI RENDERING ---
+
+        function updateUI() {
+            document.getElementById('core-amount').innerText = playerData.cores;
+            document.getElementById('ticket-amount').innerText = playerData.tickets;
+            renderStore();
+            renderInventory();
+            renderPasses();
+        }
+
+        // STORE RENDERER
+        function renderStore() {
+            const grid = document.getElementById('store-grid-container');
+            grid.innerHTML = '';
+            
+            ITEMS_DB.forEach(item => {
+                const owned = playerData.ownedItems.includes(item.id);
+                const itemEl = document.createElement('div');
+                itemEl.className = 'store-item';
+                
+                // Visual preview logic
+                let previewStyle = '';
+                if(item.type === 'Color') previewStyle = `background: ${item.color};`;
+                if(item.type === 'Pattern') previewStyle = `background: #333; color: white; display:flex; align-items:center; justify-content:center; font-size:24px;`;
+                
+                itemEl.innerHTML = `
+                    <div class="item-preview" style="${previewStyle}">${item.type === 'Pattern' ? item.preview : ''}</div>
+                    <h4>${item.name}</h4>
+                    <div class="price"><i class="fa-solid fa-bullseye"></i> ${item.price}</div>
+                    <button class="buy-btn ${owned ? 'owned' : ''}" onclick="buyItem('${item.id}')">
+                        ${owned ? 'OWNED' : 'BUY'}
+                    </button>
+                `;
+                grid.appendChild(itemEl);
+            });
+        }
+
+        // INVENTORY RENDERER
+        function renderInventory() {
+            const grid = document.getElementById('inventory-grid-container');
+            grid.innerHTML = '';
+            
+            playerData.ownedItems.forEach(itemId => {
+                // Find item details (check standard items first, could be expanded)
+                let item = ITEMS_DB.find(i => i.id === itemId);
+                if(!item && itemId === 'color_default') item = { name: 'Standard Grey', type: 'Color', color: '#888' };
+                if(!item) return; // Skip unknown
+
+                const el = document.createElement('div');
+                el.className = 'store-item';
+                el.style.border = '1px solid var(--success)';
+                
+                let previewStyle = item.type === 'Color' ? `background: ${item.color};` : `background: #333; display:flex; align-items:center; justify-content:center;`;
+                
+                el.innerHTML = `
+                    <div class="item-preview" style="${previewStyle}"></div>
+                    <h4>${item.name}</h4>
+                    <p style="color:#666; font-size:0.8rem;">${item.type}</p>
+                `;
+                grid.appendChild(el);
+            });
+        }
+
+        // PASS RENDERER
+        function renderPasses() {
+            const list = document.getElementById('pass-list');
+            list.innerHTML = '';
+
+            Object.keys(PASSES_DB).forEach(key => {
+                const pass = PASSES_DB[key];
+                const owned = playerData.unlockedPasses.includes(key);
+                const active = playerData.activePass === key;
+                
+                const el = document.createElement('div');
+                el.className = `pass-option ${active ? 'active' : ''}`;
+                el.innerHTML = `
+                    <h4>${pass.name}</h4>
+                    <div class="status">${owned ? (active ? 'ACTIVE TRACK' : 'OWNED') : 'LOCKED - ' + pass.price + ' Cores'}</div>
+                `;
+                el.onclick = () => loadPassDetails(key);
+                list.appendChild(el);
+            });
+            
+            // Reload details for active pass if not already selected
+            if(!document.getElementById('pass-details').getAttribute('data-loaded')) {
+                loadPassDetails(playerData.activePass);
+            }
+        }
+
+        window.loadPassDetails = (passKey) => {
+            const pass = PASSES_DB[passKey];
+            const owned = playerData.unlockedPasses.includes(passKey);
+            const container = document.getElementById('pass-details');
+            container.setAttribute('data-loaded', 'true');
+            
+            // Current progress index
+            const currentStep = playerData.passProgress[passKey] || 0;
+
+            let html = `
+                <div class="pass-header">
+                    <div>
+                        <h2>${pass.name}</h2>
+                        <p>${pass.desc}</p>
+                    </div>
+                    <button class="pass-buy-btn ${owned ? 'active-pass' : ''}" onclick="buyOrEquipPass('${passKey}')">
+                        ${owned ? 'ACTIVE' : 'UNLOCK (' + pass.price + ' Cores)'}
+                    </button>
+                </div>
+                <div class="pass-track-container">
+                    <div class="pass-track">
+            `;
+
+            pass.rewards.forEach((reward, index) => {
+                const unlocked = index < currentStep;
+                const nextToUnlock = index === currentStep;
+                let content = '';
+
+                if(reward.type === 'core') content = `+${reward.amount} Cores`;
+                else if(reward.type === 'item') {
+                    let itemName = ITEMS_DB.find(i => i.id === reward.itemId)?.name || 'Unknown Item';
+                    content = itemName;
+                }
+
+                html += `
+                    <div class="pass-node ${unlocked ? 'unlocked' : ''}" style="${nextToUnlock ? 'border-color:white; opacity:1;' : ''}">
+                        <div class="level-badge">LVL ${index + 1}</div>
+                        <div class="reward-preview"></div>
+                        <div style="font-size:0.7rem; text-align:center;">${content}</div>
+                        <div class="cost" style="margin-top:5px;">${reward.ticketCost} Tickets</div>
+                        ${nextToUnlock && owned ? `<button style="margin-top:5px; font-size:0.6rem; cursor:pointer;" onclick="claimReward('${passKey}', ${index})">CLAIM</button>` : ''}
+                    </div>
+                `;
+            });
+
+            html += `</div></div>`;
+            container.innerHTML = html;
+        };
+
+        // --- 4. ACTIONS ---
+
+        window.buyItem = (id) => {
+            const item = ITEMS_DB.find(i => i.id === id);
+            if(playerData.ownedItems.includes(id)) return; // Already owned
+            
+            if(playerData.cores >= item.price) {
+                playerData.cores -= item.price;
+                playerData.ownedItems.push(id);
+                saveGame();
+                alert(`Purchased ${item.name}!`);
+            } else {
+                alert("Not enough Cores!");
+            }
+        };
+
+        window.buyOrEquipPass = (key) => {
+            if(playerData.unlockedPasses.includes(key)) {
+                playerData.activePass = key;
+                saveGame();
+                return;
+            }
+
+            const pass = PASSES_DB[key];
+            if(playerData.cores >= pass.price) {
+                playerData.cores -= pass.price;
+                playerData.unlockedPasses.push(key);
+                playerData.passProgress[key] = 0; // Init progress
+                playerData.activePass = key;
+                saveGame();
+                alert(`Unlocked ${pass.name}!`);
+            } else {
+                alert("Not enough Cores!");
+            }
+        };
+
+        window.claimReward = (passKey, stepIndex) => {
+            const pass = PASSES_DB[passKey];
+            const reward = pass.rewards[stepIndex];
+
+            if(playerData.tickets >= reward.ticketCost) {
+                // Deduct tickets? Or just require accumulation? 
+                // "Player dedicates tickets" implies spending.
+                playerData.tickets -= reward.ticketCost;
+                
+                // Grant Reward
+                if(reward.type === 'core') playerData.cores += reward.amount;
+                if(reward.type === 'item' && !playerData.ownedItems.includes(reward.itemId)) {
+                    playerData.ownedItems.push(reward.itemId);
+                }
+
+                // Advance Progress
+                playerData.passProgress[passKey]++;
+                saveGame();
+                loadPassDetails(passKey); // Refresh view
+            } else {
+                alert("Not enough Tickets to claim this reward!");
+            }
+        };
+
+        window.resetSaveData = () => {
+            if(confirm("Reset all progress? This cannot be undone.")) {
+                localStorage.removeItem('bs_playerData');
+                location.reload();
+            }
+        }
+
+        // --- 5. NAVIGATION LOGIC ---
+        const tabs = document.querySelectorAll('.nav-btn');
+        const views = document.querySelectorAll('.view');
+        
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                views.forEach(v => v.classList.remove('active-view'));
+                tab.classList.add('active');
+                const targetId = tab.getAttribute('data-target');
+                document.getElementById(targetId).classList.add('active-view');
+                
+                // Close mobile menu on selection
+                if(window.innerWidth <= 768) {
+                    document.querySelector('.sidebar').classList.remove('active');
+                }
+            });
+        });
+
+        // Mobile Toggle
+        document.getElementById('mobileToggle').addEventListener('click', () => {
+            document.querySelector('.sidebar').classList.toggle('active');
+        });
+
+        // Init
+        updateUI();
+        
+        // Music & SFX Persistence (kept from original)
+        const audio = document.getElementById('bgMusic');
+        const musicVol = document.getElementById('musicVolume');
+        
+        if(localStorage.getItem('bgMusicPlaying') === 'true') {
+             // Audio play policies often require interaction, try catch
+             try { audio.play(); } catch(e) {}
+        }
+        if(localStorage.getItem('bgMusicTime')) {
+            audio.currentTime = localStorage.getItem('bgMusicTime');
+        }
+
+        if(musicVol && audio) {
+            musicVol.addEventListener('input', (e) => {
+                audio.volume = e.target.value;
+            });
+        }
+        
+        window.addEventListener('beforeunload', () => {
+            localStorage.setItem('bgMusicTime', audio.currentTime);
+            localStorage.setItem('bgMusicPlaying', !audio.paused);
+        });
+    });
+    </script>
+</body>
+</html>
