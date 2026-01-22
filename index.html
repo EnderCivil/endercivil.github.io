@@ -20,6 +20,7 @@
     <canvas id="ballCanvas"></canvas>
     <div class="app-container">
         <nav class="sidebar">
+          <button class="menu-toggle" id="mobileToggle"><i class="fa-solid fa-bars"></i></button>
             <div class="brand">
                 <h1>Brawl<span>Spheres</span></h1>
             </div>
@@ -146,6 +147,20 @@
                 });
             }
         });
+
+        // Music Persistence Script
+    const audio = document.getElementById('bgMusic');
+    
+    // Save state before leaving page
+    window.addEventListener('beforeunload', () => {
+        localStorage.setItem('bgMusicTime', audio.currentTime);
+        localStorage.setItem('bgMusicPlaying', !audio.paused);
+    });
+
+    // Mobile Toggle Logic
+    document.getElementById('mobileToggle').addEventListener('click', () => {
+        document.querySelector('.sidebar').classList.toggle('active');
+    });
     </script>
 </body>
 </html>
